@@ -268,7 +268,6 @@ function renderGrid() {
 
     if (plot.state === 'growing') {
       cell.textContent = plotEmoji(plot);
-      cell.style.fontSize = '22px';
 
       const dTag = document.createElement('span');
       dTag.className = 'days-tag';
@@ -277,11 +276,9 @@ function renderGrid() {
 
     } else if (plot.state === 'ready') {
       cell.textContent = CROPS[plot.cropId].emoji;
-      cell.style.fontSize = '32px';
 
     } else if (plot.state === 'withered') {
       cell.textContent = '🥀';
-      cell.style.fontSize = '28px';
       cell.title = '點擊清除枯死的植物';
     }
 
@@ -1035,6 +1032,7 @@ function bindEvents() {
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
     if (btn.dataset.tab === 'end') { endDay(); return; }
+    if (btn.dataset.tab === 'pet') { openPetScreen(); return; }
     G.activeTab = btn.dataset.tab;
     renderPanel();
   });
