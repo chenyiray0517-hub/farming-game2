@@ -76,6 +76,73 @@ const ROWS = 7;
 function xpNeeded(level) { return level * 150 + 50; }
 
 // ══════════════════════════════════════════
+//  AUDIO / SFX
+// ══════════════════════════════════════════
+
+let sfxMuted = localStorage.getItem('farm_sfx_muted') === '1';
+
+const SFX = (() => {
+  let ctx = null;
+
+  function ac() {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (_) { return null; }
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function note(freq, dur, vol = 0.22, type = 'sine', delay = 0) {
+    if (sfxMuted) return;
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + delay;
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  }
+
+  function sweep(f1, f2, dur, vol = 0.18, type = 'sine', delay = 0) {
+    if (sfxMuted) return;
+    const c = ac(); if (!c) return;
+    const t = c.currentTime + delay;
+    const osc = c.createOscillator(), g = c.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f1, t);
+    osc.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  }
+
+  return {
+    plant()    { note(220, 0.1, 0.2, 'triangle'); note(330, 0.08, 0.12, 'triangle', 0.05); },
+    water()    { sweep(700, 250, 0.28, 0.15); sweep(500, 180, 0.22, 0.1, 'sine', 0.07); },
+    harvest()  { note(523, 0.2, 0.22); note(659, 0.2, 0.2, 'sine', 0.08); note(784, 0.35, 0.25, 'sine', 0.16); },
+    sell()     { [523, 659, 784].forEach((f, i) => note(f, 0.12, 0.2, 'triangle', i * 0.055)); },
+    levelUp()  { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.35, 0.28, 'sine', i * 0.1)); },
+    taskDone() { note(784, 0.15, 0.22, 'sine'); note(1047, 0.3, 0.28, 'sine', 0.12); },
+    endDay()   { note(349, 0.7, 0.22, 'sine'); note(440, 0.5, 0.18, 'sine', 0.22); },
+    feedPet()  { note(880, 0.1, 0.18, 'sine'); note(1100, 0.15, 0.2, 'sine', 0.08); },
+    adopt()    { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
+    error()    { note(130, 0.25, 0.22, 'square'); },
+    wither()   { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
+  };
+})();
+
+function toggleMute() {
+  sfxMuted = !sfxMuted;
+  localStorage.setItem('farm_sfx_muted', sfxMuted ? '1' : '0');
+  document.getElementById('mute-btn').textContent = sfxMuted ? '🔇' : '🔊';
+}
+
+// ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
 
@@ -427,8 +494,9 @@ function plantSeed(idx) {
 
   const crop = CROPS[G.selectedSeed];
   const cost = Math.max(1, Math.round(crop.cost * (1 - G.activeBuffs.shopDiscount)));
-  if (G.money < cost) { showToast('💰 金幣不足！'); return; }
+  if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
 
+  SFX.plant();
   G.money -= cost;
   G.boughtToday++;
 
@@ -447,6 +515,7 @@ function harvestPlot(idx) {
   const plot = G.grid[idx];
   if (plot.state !== 'ready') return;
 
+  SFX.harvest();
   const crop = CROPS[plot.cropId];
   G.inventory[plot.cropId] = (G.inventory[plot.cropId] || 0) + 1;
   G.harvestedToday++;
@@ -476,6 +545,7 @@ function harvestAll() {
   });
 
   if (count === 0) { showToast('目前沒有可收穫的作物'); return; }
+  SFX.harvest();
   showToast(`🌾 全部收穫！共收穫 ${count} 個作物`);
   checkTasks();
   save();
@@ -485,6 +555,7 @@ function harvestAll() {
 function waterPlot(idx) {
   const plot = G.grid[idx];
   if (plot.state !== 'growing' || plot.watered) return;
+  SFX.water();
   plot.watered = true;
   save();
   renderGrid(); // lightweight re-render
@@ -509,6 +580,7 @@ function sellCrop(cropId) {
   G.totalEarned += earned;
   delete G.inventory[cropId];
 
+  SFX.sell();
   showToast(`出售 ${crop.emoji} ×${count}，獲得 +${earned} 💰`);
   checkTasks();
   save();
@@ -527,6 +599,7 @@ function sellAll() {
   G.totalEarned += total;
   G.inventory    = {};
 
+  SFX.sell();
   showToast(`全部出售！獲得 +${total} 💰`);
   checkTasks();
   save();
@@ -540,6 +613,7 @@ function gainXP(amount) {
   while (G.xp >= xpNeeded(G.level)) {
     G.xp -= xpNeeded(G.level);
     G.level++;
+    SFX.levelUp();
     const title = LEVEL_TITLES[Math.min(G.level, LEVEL_TITLES.length - 1)];
     showToast(`🎉 升級！現在是 Lv.${G.level} ${title}`, 3000);
     checkTasks();
@@ -555,6 +629,7 @@ function checkTasks() {
       G.dailyTasksDone[t.id] = true;
       G.money += t.reward.money;
       gainXP(t.reward.xp);
+      SFX.taskDone();
       showToast(`📅 任務完成：${t.title}！`, 3000);
     }
   });
@@ -564,6 +639,7 @@ function checkTasks() {
       G.achievementsDone[t.id] = true;
       G.money += t.reward.money;
       gainXP(t.reward.xp);
+      SFX.taskDone();
       showToast(`🏆 成就解鎖：${t.title}！`, 3500);
     }
   });
@@ -601,8 +677,8 @@ function endDay() {
     }
   });
 
-  if (witheredCount > 0) showToast(`🥀 有 ${witheredCount} 株植物因缺水枯死了！`, 3500);
-  if (outOfSeasonCount > 0) showToast(`🌡️ 有 ${outOfSeasonCount} 株植物因季節不適而枯死了！`, 3500);
+  if (witheredCount > 0) { SFX.wither(); showToast(`🥀 有 ${witheredCount} 株植物因缺水枯死了！`, 3500); }
+  if (outOfSeasonCount > 0) { SFX.wither(); showToast(`🌡️ 有 ${outOfSeasonCount} 株植物因季節不適而枯死了！`, 3500); }
 
   // Advance day
   G.day++;
@@ -630,6 +706,7 @@ function endDay() {
   generateDailyPets();
 
   // Day overlay
+  SFX.endDay();
   const overlay = document.createElement('div');
   overlay.id = 'day-overlay';
   overlay.innerHTML = `<div class="day-big">第 ${G.day} 天</div><div class="day-sub">${SEASON_ICONS[G.season]}${SEASONS[G.season]}・${WEATHERS[G.weather].icon}${WEATHERS[G.weather].name}</div>`;
@@ -722,7 +799,7 @@ function upgradeByPetId(petId) {
   const lv = getPetLevel(petId);
   if (lv >= 5) { showToast('✨ 已達最高等級！'); return; }
   const cost = upgradeCost(lv);
-  if (G.money < cost) { showToast('💰 金幣不足！'); return; }
+  if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
   const pt = PET_TYPES.find(p => p.id === petId);
   G.money -= cost;
   G.petLevels[petId] = lv + 1;
@@ -747,6 +824,7 @@ function adoptPet(petIdx) {
   if (G.ownedPets.length >= 5) { showToast('🏡 農場最多容納 5 隻寵物，請先放生一隻！', 3000); return; }
   G.ownedPets.push(pet.id);
   reapplyBuffs();
+  SFX.adopt();
   showToast(`🐾 ${pet.emoji} ${pet.name} 永久加入了你的農場！`, 3000);
   save();
   renderPetScreen();
@@ -961,6 +1039,7 @@ function feedPet(petIdx, cropId) {
   gainXP(xpGain);
   G.money += moneyGain;
 
+  SFX.feedPet();
   showToast(
     isFav
       ? `${pet.emoji} ${pet.name} 最愛的食物！ +${xpGain} XP +${moneyGain} 💰  ${pet.buff.icon}${pet.buff.label}`
@@ -1045,6 +1124,7 @@ function bindEvents() {
   // Pet screen
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
+  document.getElementById('mute-btn').addEventListener('click', toggleMute);
 }
 
 // ══════════════════════════════════════════
@@ -1055,3 +1135,4 @@ load();
 bindEvents();
 updateCursor();
 renderAll();
+document.getElementById('mute-btn').textContent = sfxMuted ? '🔇' : '🔊';
