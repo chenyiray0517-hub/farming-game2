@@ -4,17 +4,17 @@
 
 const CROPS = {
   // ── 普通 ──────────────────────────────────
-  cauliflower: { id: 'cauliflower', name: '花椰菜', emoji: '🥦', cost: 8,  sell: 20,  days: 2, xp: 5,  minLevel: 1,  seasons: [2, 3], rarity: 'common'  },
-  radish:      { id: 'radish',      name: '蘿蔔',   emoji: '🥬', cost: 10, sell: 28,  days: 2, xp: 7,  minLevel: 1,  seasons: [0, 2], rarity: 'common'  },
   potato:      { id: 'potato',      name: '馬鈴薯', emoji: '🥔', cost: 6,  sell: 16,  days: 2, xp: 4,  minLevel: 1,  seasons: [0, 2], rarity: 'common'  },
-  mushroom:    { id: 'mushroom',    name: '蘑菇',   emoji: '🍄', cost: 11, sell: 30,  days: 2, xp: 7,  minLevel: 1,  seasons: [2, 3], rarity: 'common'  },
+  radish:      { id: 'radish',      name: '蘿蔔',   emoji: '🥬', cost: 10, sell: 28,  days: 2, xp: 7,  minLevel: 1,  seasons: [0, 2], rarity: 'common'  },
+  cauliflower: { id: 'cauliflower', name: '花椰菜', emoji: '🥦', cost: 8,  sell: 20,  days: 2, xp: 5,  minLevel: 3,  seasons: [2, 3], rarity: 'common'  },
+  mushroom:    { id: 'mushroom',    name: '蘑菇',   emoji: '🍄', cost: 11, sell: 30,  days: 2, xp: 7,  minLevel: 5,  seasons: [2, 3], rarity: 'common'  },
   // ── 優良 ──────────────────────────────────
-  onion:       { id: 'onion',       name: '洋蔥',   emoji: '🧅', cost: 14, sell: 38,  days: 3, xp: 10, minLevel: 1,  seasons: [0, 3], rarity: 'good'    },
-  carrot:      { id: 'carrot',      name: '胡蘿蔔', emoji: '🥕', cost: 18, sell: 50,  days: 3, xp: 13, minLevel: 1,  seasons: [2, 3], rarity: 'good'    },
-  corn:        { id: 'corn',        name: '玉米',   emoji: '🌽', cost: 25, sell: 70,  days: 4, xp: 20, minLevel: 8,  seasons: [1],    rarity: 'good'    },
-  cucumber:    { id: 'cucumber',    name: '小黃瓜', emoji: '🥒', cost: 22, sell: 65,  days: 4, xp: 18, minLevel: 15, seasons: [1],    rarity: 'good'    },
-  bellpepper:  { id: 'bellpepper',  name: '青椒',   emoji: '🫑', cost: 19, sell: 54,  days: 3, xp: 14, minLevel: 3,  seasons: [1],    rarity: 'good'    },
+  onion:       { id: 'onion',       name: '洋蔥',   emoji: '🧅', cost: 14, sell: 38,  days: 3, xp: 10, minLevel: 4,  seasons: [0, 3], rarity: 'good'    },
+  carrot:      { id: 'carrot',      name: '胡蘿蔔', emoji: '🥕', cost: 18, sell: 50,  days: 3, xp: 13, minLevel: 6,  seasons: [2, 3], rarity: 'good'    },
+  bellpepper:  { id: 'bellpepper',  name: '青椒',   emoji: '🫑', cost: 19, sell: 54,  days: 3, xp: 14, minLevel: 8,  seasons: [1],    rarity: 'good'    },
+  corn:        { id: 'corn',        name: '玉米',   emoji: '🌽', cost: 25, sell: 70,  days: 4, xp: 20, minLevel: 10, seasons: [1],    rarity: 'good'    },
   eggplant:    { id: 'eggplant',    name: '茄子',   emoji: '🍆', cost: 24, sell: 68,  days: 4, xp: 19, minLevel: 12, seasons: [1, 2], rarity: 'good'    },
+  cucumber:    { id: 'cucumber',    name: '小黃瓜', emoji: '🥒', cost: 22, sell: 65,  days: 4, xp: 18, minLevel: 15, seasons: [1],    rarity: 'good'    },
   // ── 高級 ──────────────────────────────────
   strawberry:  { id: 'strawberry',  name: '草莓',   emoji: '🍓', cost: 30, sell: 85,  days: 3, xp: 25, minLevel: 18, seasons: [0],    rarity: 'premium' },
   tomato:      { id: 'tomato',      name: '番茄',   emoji: '🍅', cost: 35, sell: 95,  days: 4, xp: 28, minLevel: 22, seasons: [1],    rarity: 'premium' },
