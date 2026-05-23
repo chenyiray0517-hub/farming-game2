@@ -1,0 +1,1059 @@
+// ══════════════════════════════════════════
+//  GAME DATA
+// ══════════════════════════════════════════
+
+const CROPS = {
+  // ── 普通 ──────────────────────────────────
+  cauliflower: { id: 'cauliflower', name: '花椰菜', emoji: '🥦', cost: 8,  sell: 20,  days: 2, xp: 5,  minLevel: 1,  seasons: [2, 3], rarity: 'common'  },
+  radish:      { id: 'radish',      name: '蘿蔔',   emoji: '🥬', cost: 10, sell: 28,  days: 2, xp: 7,  minLevel: 1,  seasons: [0, 2], rarity: 'common'  },
+  potato:      { id: 'potato',      name: '馬鈴薯', emoji: '🥔', cost: 6,  sell: 16,  days: 2, xp: 4,  minLevel: 1,  seasons: [0, 2], rarity: 'common'  },
+  mushroom:    { id: 'mushroom',    name: '蘑菇',   emoji: '🍄', cost: 11, sell: 30,  days: 2, xp: 7,  minLevel: 1,  seasons: [2, 3], rarity: 'common'  },
+  // ── 優良 ──────────────────────────────────
+  onion:       { id: 'onion',       name: '洋蔥',   emoji: '🧅', cost: 14, sell: 38,  days: 3, xp: 10, minLevel: 1,  seasons: [0, 3], rarity: 'good'    },
+  carrot:      { id: 'carrot',      name: '胡蘿蔔', emoji: '🥕', cost: 18, sell: 50,  days: 3, xp: 13, minLevel: 1,  seasons: [2, 3], rarity: 'good'    },
+  corn:        { id: 'corn',        name: '玉米',   emoji: '🌽', cost: 25, sell: 70,  days: 4, xp: 20, minLevel: 8,  seasons: [1],    rarity: 'good'    },
+  cucumber:    { id: 'cucumber',    name: '小黃瓜', emoji: '🥒', cost: 22, sell: 65,  days: 4, xp: 18, minLevel: 15, seasons: [1],    rarity: 'good'    },
+  bellpepper:  { id: 'bellpepper',  name: '青椒',   emoji: '🫑', cost: 19, sell: 54,  days: 3, xp: 14, minLevel: 3,  seasons: [1],    rarity: 'good'    },
+  eggplant:    { id: 'eggplant',    name: '茄子',   emoji: '🍆', cost: 24, sell: 68,  days: 4, xp: 19, minLevel: 12, seasons: [1, 2], rarity: 'good'    },
+  // ── 高級 ──────────────────────────────────
+  strawberry:  { id: 'strawberry',  name: '草莓',   emoji: '🍓', cost: 30, sell: 85,  days: 3, xp: 25, minLevel: 18, seasons: [0],    rarity: 'premium' },
+  tomato:      { id: 'tomato',      name: '番茄',   emoji: '🍅', cost: 35, sell: 95,  days: 4, xp: 28, minLevel: 22, seasons: [1],    rarity: 'premium' },
+  pumpkin:     { id: 'pumpkin',     name: '南瓜',   emoji: '🎃', cost: 45, sell: 125, days: 5, xp: 40, minLevel: 28, seasons: [2],    rarity: 'premium' },
+  grape:       { id: 'grape',       name: '葡萄',   emoji: '🍇', cost: 38, sell: 108, days: 4, xp: 33, minLevel: 20, seasons: [2],    rarity: 'premium' },
+  watermelon:  { id: 'watermelon',  name: '西瓜',   emoji: '🍉', cost: 42, sell: 120, days: 5, xp: 37, minLevel: 24, seasons: [1],    rarity: 'premium' },
+};
+
+const PET_TYPES = [
+  { id: 'cat',      name: '小貓',   emoji: '🐱', favCrop: 'strawberry',  xpBase: 15, buff: { type: 'xpBonus',      value: 0.3,  icon: '⭐', label: '採收 XP +30%'     } },
+  { id: 'dog',      name: '小狗',   emoji: '🐶', favCrop: 'carrot',      xpBase: 15, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'rabbit',   name: '小兔',   emoji: '🐰', favCrop: 'radish',      xpBase: 15, buff: { type: 'shopDiscount', value: 0.15, icon: '🛒', label: '種子費用 -15%'    } },
+  { id: 'fox',      name: '小狐',   emoji: '🦊', favCrop: 'corn',        xpBase: 20, buff: { type: 'sellBonus',    value: 0.25, icon: '💰', label: '販售收益 +25%'    } },
+  { id: 'bear',     name: '小熊',   emoji: '🐻', favCrop: 'pumpkin',     xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
+  { id: 'panda',    name: '熊貓',   emoji: '🐼', favCrop: 'cauliflower', xpBase: 20, buff: { type: 'xpBonus',      value: 0.5,  icon: '⭐', label: '採收 XP +50%'     } },
+  { id: 'deer',     name: '小鹿',   emoji: '🦌', favCrop: 'corn',        xpBase: 20, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'chick',    name: '小雞',   emoji: '🐤', favCrop: 'cauliflower', xpBase: 10, buff: { type: 'shopDiscount', value: 0.1,  icon: '🛒', label: '種子費用 -10%'    } },
+  { id: 'duck',     name: '小鴨',   emoji: '🦆', favCrop: 'radish',      xpBase: 10, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
+  { id: 'frog',     name: '青蛙',   emoji: '🐸', favCrop: 'cucumber',    xpBase: 15, buff: { type: 'sellBonus',    value: 0.15, icon: '💰', label: '販售收益 +15%'    } },
+  { id: 'owl',      name: '貓頭鷹', emoji: '🦉', favCrop: 'onion',       xpBase: 20, buff: { type: 'xpBonus',      value: 0.4,  icon: '⭐', label: '採收 XP +40%'     } },
+  { id: 'hedgehog', name: '刺蝟',   emoji: '🦔', favCrop: 'strawberry',  xpBase: 20, buff: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
+  { id: 'squirrel', name: '松鼠',   emoji: '🐿️', favCrop: 'corn',        xpBase: 15, buff: { type: 'shopDiscount', value: 0.2,  icon: '🛒', label: '種子費用 -20%'    } },
+  { id: 'koala',    name: '無尾熊', emoji: '🐨', favCrop: 'cucumber',    xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
+  { id: 'tiger',    name: '小虎',   emoji: '🐯', favCrop: 'tomato',      xpBase: 30, buff: { type: 'sellBonus',    value: 0.35, icon: '💰', label: '販售收益 +35%'    } },
+];
+
+const SEASONS       = ['春', '夏', '秋', '冬'];
+const SEASON_CLASSES = ['spring', 'summer', 'autumn', 'winter'];
+const SEASON_ICONS   = ['🌸', '☀️', '🍂', '❄️'];
+const SEASON_LENGTH  = 7;
+
+const WEATHERS = [
+  { name: '晴天', icon: '☀️',  bonus: 0 },
+  { name: '雨天', icon: '🌧️', bonus: 1 }, // crops grow an extra day; rain also auto-waters
+  { name: '霧天', icon: '🌫️', bonus: 0 },
+  { name: '陰天', icon: '⛅',  bonus: 0 },
+];
+const WEATHER_WEIGHTS = [0.4, 0.2, 0.2, 0.2];
+
+const RARITIES = {
+  common:    { name: '普通', color: '#757575', borderColor: '#bdbdbd', badgeBg: '#eeeeee', badgeColor: '#424242' },
+  good:      { name: '優良', color: '#2e7d32', borderColor: '#66bb6a', badgeBg: '#e8f5e9', badgeColor: '#1b5e20' },
+  premium:   { name: '高級', color: '#1565c0', borderColor: '#42a5f5', badgeBg: '#e3f2fd', badgeColor: '#0d47a1' },
+  legendary: { name: '傳奇', color: '#6a1b9a', borderColor: '#ab47bc', badgeBg: '#f3e5f5', badgeColor: '#4a148c' },
+  mythical:  { name: '神話', color: '#bf360c', borderColor: '#ff7043', badgeBg: '#fbe9e7', badgeColor: '#7f0000' },
+};
+
+const LEVEL_TITLES = [
+  '',
+  '農業新手', '農業初學', '業餘農夫', '農夫',   '熟練農夫',
+  '資深農夫', '農場老手', '農場主人', '農業達人', '老農',
+  '農業專家', '農業大師', '農業宗師', '農耕大師', '傳奇農夫',
+  '農業至尊', '種田之神', '大地之主', '農業傳說', '萬世農神',
+];
+
+const COLS = 6;
+const ROWS = 7;
+
+function xpNeeded(level) { return level * 150 + 50; }
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+
+function makePlot() {
+  return { state: 'empty', cropId: null, daysLeft: 0, totalDays: 0, watered: false };
+}
+
+const DEFAULT_STATE = () => ({
+  day:      1,
+  money:    100,
+  level:    1,
+  xp:       0,
+  season:   0,
+  weather:  0,
+  mode:     'normal', // 'normal' | 'watering' | 'harvest'
+  selectedSeed: null,
+  activeTab:    'shop',
+  grid: Array(COLS * ROWS).fill(null).map(makePlot),
+  inventory:        {},
+  totalHarvested:   0,
+  totalEarned:      0,
+  harvestedToday:   0,
+  earnedToday:      0,
+  boughtToday:      0,
+  dailyTasksDone:   {},
+  achievementsDone: {},
+  dailyPets:        [],
+  feedingPetIdx:    -1,
+  viewingPetIdx:    -1,
+  viewingOwnedId:   null,
+  petLevels:        {},
+  ownedPets:        [],
+  activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false },
+});
+
+let G = DEFAULT_STATE();
+
+// ══════════════════════════════════════════
+//  TASK DEFINITIONS
+// ══════════════════════════════════════════
+
+function makeDailyTasks() {
+  return [
+    { id: 'daily_harvest3', title: '今日收穫 3 個作物',  target: 3,   key: 'harvestedToday', reward: { xp: 30,  money: 20  } },
+    { id: 'daily_earn100',  title: '今日賺取 100 金幣',  target: 100, key: 'earnedToday',    reward: { xp: 20,  money: 0   } },
+    { id: 'daily_buy2',     title: '今日購買 2 個種子',  target: 2,   key: 'boughtToday',    reward: { xp: 15,  money: 10  } },
+  ];
+}
+
+function makeAchievements() {
+  return [
+    { id: 'ach_first_harvest', title: '第一次收穫',          target: 1,    key: 'totalHarvested', reward: { xp: 50,  money: 0   } },
+    { id: 'ach_earn500',       title: '累計賺取 500 金幣',   target: 500,  key: 'totalEarned',    reward: { xp: 100, money: 50  } },
+    { id: 'ach_harvest20',     title: '累計收穫 20 個作物',  target: 20,   key: 'totalHarvested', reward: { xp: 150, money: 100 } },
+    { id: 'ach_harvest100',    title: '累計收穫 100 個作物', target: 100,  key: 'totalHarvested', reward: { xp: 500, money: 300 } },
+    { id: 'ach_earn2000',      title: '累計賺取 2000 金幣',  target: 2000, key: 'totalEarned',    reward: { xp: 300, money: 200 } },
+    { id: 'ach_lv5',           title: '達到 5 級',           target: 5,    key: 'level',          reward: { xp: 0,   money: 200 } },
+    { id: 'ach_lv10',          title: '達到 10 級',          target: 10,   key: 'level',          reward: { xp: 0,   money: 500 } },
+  ];
+}
+
+// ══════════════════════════════════════════
+//  SAVE / LOAD
+// ══════════════════════════════════════════
+
+function save() {
+  try { localStorage.setItem('farmGame_v2', JSON.stringify(G)); } catch(_) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem('farmGame_v2');
+    if (raw) {
+      G = Object.assign(DEFAULT_STATE(), JSON.parse(raw));
+      G.grid.forEach(p => { if (p.watered === undefined) p.watered = false; });
+    }
+  } catch(_) { G = DEFAULT_STATE(); }
+  G.feedingPetIdx  = -1; // always reset transient state
+  G.viewingPetIdx  = -1;
+  G.viewingOwnedId = null;
+  if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
+  else reapplyBuffs(); // ensure owned pet buffs are active on save-load
+}
+
+// ══════════════════════════════════════════
+//  CURSOR / MODE
+// ══════════════════════════════════════════
+
+const follower = document.getElementById('cursor-follow');
+
+document.addEventListener('mousemove', e => {
+  if (G.mode === 'normal') return;
+  follower.style.left = e.clientX + 'px';
+  follower.style.top  = e.clientY + 'px';
+});
+
+function setMode(newMode) {
+  G.mode = (G.mode === newMode) ? 'normal' : newMode;
+  updateCursor();
+  renderBottomBar();
+  save();
+}
+
+function updateCursor() {
+  document.body.classList.toggle('watering-mode', G.mode === 'watering');
+  document.body.classList.toggle('harvest-mode',  G.mode === 'harvest');
+
+  if (G.mode === 'watering') {
+    follower.textContent = '🪣';
+    follower.style.display = 'block';
+  } else if (G.mode === 'harvest') {
+    follower.textContent = '🌾';
+    follower.style.display = 'block';
+  } else {
+    follower.style.display = 'none';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && G.mode !== 'normal') {
+    G.mode = 'normal';
+    updateCursor();
+    renderBottomBar();
+    save();
+  }
+});
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+
+function renderAll() {
+  renderTopBar();
+  renderGrid();
+  renderPanel();
+  renderBottomBar();
+  renderBuffStrip();
+}
+
+function renderBuffStrip() {
+  const strip = document.getElementById('buff-strip');
+  if (!strip) return;
+  const b = G.activeBuffs;
+  const chips = [];
+  if (b.xpBonus      > 0)   chips.push(`⭐ 採收 XP +${Math.round(b.xpBonus * 100)}%`);
+  if (b.sellBonus    > 0)   chips.push(`💰 販售 +${Math.round(b.sellBonus * 100)}%`);
+  if (b.shopDiscount > 0)   chips.push(`🛒 種子 -${Math.round(b.shopDiscount * 100)}%`);
+  if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth}天/日`);
+  if (b.noWither)           chips.push(`💧 植物不會枯死`);
+  strip.innerHTML = chips.length
+    ? chips.map(t => `<span class="buff-chip">${t}</span>`).join('')
+    : '';
+}
+
+function renderTopBar() {
+  document.getElementById('day-num').textContent   = G.day;
+  document.getElementById('money-num').textContent = G.money;
+  document.getElementById('lv-num').textContent    = G.level;
+  document.getElementById('lv-title').textContent  = LEVEL_TITLES[Math.min(G.level, LEVEL_TITLES.length - 1)];
+
+  const needed = xpNeeded(G.level);
+  const pct    = Math.min((G.xp / needed) * 100, 100);
+  document.getElementById('xp-bar').style.width = pct + '%';
+  document.getElementById('xp-rem').textContent = needed - G.xp;
+
+  const sb = document.getElementById('season-badge');
+  sb.textContent = SEASON_ICONS[G.season] + ' ' + SEASONS[G.season];
+  sb.className   = 'badge ' + SEASON_CLASSES[G.season];
+
+  const w = WEATHERS[G.weather];
+  document.getElementById('weather-badge').textContent = w.icon + ' ' + w.name;
+}
+
+function plotEmoji(plot) {
+  if (plot.state !== 'growing') return '';
+  const progress = 1 - plot.daysLeft / plot.totalDays;
+  if (progress < 0.35) return '🌱';
+  if (progress < 0.75) return '🌿';
+  return CROPS[plot.cropId].emoji;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('farm-grid');
+  grid.innerHTML = '';
+
+  G.grid.forEach((plot, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'plot ' + plot.state + (plot.state === 'growing' && plot.watered ? ' watered' : '');
+    cell.dataset.idx = idx;
+
+    if (plot.state === 'growing') {
+      cell.textContent = plotEmoji(plot);
+      cell.style.fontSize = '22px';
+
+      const dTag = document.createElement('span');
+      dTag.className = 'days-tag';
+      dTag.textContent = plot.daysLeft + '天';
+      cell.appendChild(dTag);
+
+    } else if (plot.state === 'ready') {
+      cell.textContent = CROPS[plot.cropId].emoji;
+      cell.style.fontSize = '32px';
+
+    } else if (plot.state === 'withered') {
+      cell.textContent = '🥀';
+      cell.style.fontSize = '28px';
+      cell.title = '點擊清除枯死的植物';
+    }
+
+    grid.appendChild(cell);
+  });
+}
+
+function renderPanel() {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === G.activeTab);
+  });
+  const body = document.getElementById('panel-body');
+  if      (G.activeTab === 'shop')      renderShop(body);
+  else if (G.activeTab === 'warehouse') renderWarehouse(body);
+  else if (G.activeTab === 'tasks')     renderTasks(body);
+}
+
+function renderBottomBar() {
+  document.getElementById('water-btn').classList.toggle('active', G.mode === 'watering');
+  document.getElementById('harvest-single-btn').classList.toggle('active', G.mode === 'harvest');
+}
+
+// ── Shop ──────────────────────────────────
+
+function renderShop(el) {
+  let html = '<div class="shop-hint">選好種子後，長按拖曳農地批量種植<br>非當季種植每天有 25% 枯死率</div>';
+
+  ['common', 'good', 'premium', 'legendary', 'mythical'].forEach(rarityKey => {
+    const crops = Object.values(CROPS).filter(c => c.rarity === rarityKey);
+    if (!crops.length) return;
+
+    const r = RARITIES[rarityKey];
+    html += `<div class="rarity-section-title" style="color:${r.color};border-color:${r.borderColor}">${r.name}</div>`;
+
+    crops.forEach(crop => {
+      const locked      = G.level < crop.minLevel;
+      const selected    = G.selectedSeed === crop.id;
+      const inSeason    = crop.seasons.includes(G.season);
+      const seasonIcons = crop.seasons.map(s => SEASON_ICONS[s]).join('');
+      const cls = `seed-card rarity-${rarityKey}${locked ? ' locked' : ''}${selected ? ' selected' : ''}`;
+
+      html += `
+        <div class="${cls}" data-crop="${crop.id}">
+          <span class="seed-emoji">${crop.emoji}</span>
+          <div class="seed-info">
+            <div class="seed-name">
+              ${crop.name}
+              <span class="rarity-badge" style="color:${r.badgeColor};background:${r.badgeBg}">${r.name}</span>
+            </div>
+            <div class="seed-days">${crop.days}天</div>
+            <div class="seed-season ${inSeason ? 'in-season' : 'out-season'}">${seasonIcons} ${inSeason ? '當季' : '非當季⚠'}</div>
+          </div>
+          <div class="seed-prices">
+            ${locked
+              ? `<span class="lock-label">🔒 Lv.${crop.minLevel}</span>`
+              : `<span class="seed-cost">-${crop.cost} 💰</span><span class="seed-sell">+${crop.sell} 💰</span>`}
+          </div>
+        </div>`;
+    });
+  });
+
+  el.innerHTML = html;
+
+  el.querySelectorAll('.seed-card:not(.locked)').forEach(card => {
+    card.addEventListener('click', () => {
+      G.selectedSeed = G.selectedSeed === card.dataset.crop ? null : card.dataset.crop;
+      renderPanel();
+    });
+  });
+}
+
+// ── Warehouse ─────────────────────────────
+
+function renderWarehouse(el) {
+  const items = Object.entries(G.inventory);
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-msg">倉庫是空的<br/>收穫作物後在這裡出售</div>';
+    return;
+  }
+
+  let total = 0;
+  let html  = '';
+
+  items.forEach(([id, count]) => {
+    const crop = CROPS[id];
+    const val  = crop.sell * count;
+    total += val;
+    html += `
+      <div class="inv-item">
+        <span class="inv-emoji">${crop.emoji}</span>
+        <div class="inv-info">
+          <div class="inv-name">${crop.name}</div>
+          <div class="inv-sub">x${count} &nbsp;(共 ${val} 💰)</div>
+        </div>
+        <button class="sell-btn" data-crop="${id}">出售</button>
+      </div>`;
+  });
+
+  html += `<button class="sell-all-btn">全部出售 (+${total} 💰)</button>`;
+  el.innerHTML = html;
+
+  el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => sellCrop(b.dataset.crop)));
+  el.querySelector('.sell-all-btn').addEventListener('click', sellAll);
+}
+
+// ── Tasks ─────────────────────────────────
+
+function renderTasks(el) {
+  function taskHTML(tasks, doneMap) {
+    return tasks.map(t => {
+      const cur  = Math.min(taskStatValue(t.key), t.target);
+      const done = !!doneMap[t.id];
+      const pct  = Math.min((cur / t.target) * 100, 100);
+      const cls  = done ? 'done' : (cur > 0 ? 'in-progress' : '');
+      const rwd  = [t.reward.xp ? t.reward.xp + ' XP' : '', t.reward.money ? '+' + t.reward.money + ' 💰' : ''].filter(Boolean).join('  ');
+
+      return `
+        <div class="task-card ${cls}">
+          <div class="task-title">${done ? '✅ ' : ''}${t.title}</div>
+          <div class="task-prog-txt">${cur} / ${t.target}</div>
+          <div class="task-prog-bar"><div class="task-prog-fill" style="width:${pct}%"></div></div>
+          <div class="task-reward">獎勵: ${rwd}</div>
+        </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+    <div class="task-section-title">📅 今日任務</div>
+    ${taskHTML(makeDailyTasks(), G.dailyTasksDone)}
+    <div class="task-section-title" style="margin-top:14px">🏆 成就</div>
+    ${taskHTML(makeAchievements(), G.achievementsDone)}`;
+}
+
+function taskStatValue(key) {
+  return { harvestedToday: G.harvestedToday, earnedToday: G.earnedToday, boughtToday: G.boughtToday, totalHarvested: G.totalHarvested, totalEarned: G.totalEarned, level: G.level }[key] ?? 0;
+}
+
+// ══════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════
+
+function plantSeed(idx) {
+  if (!G.selectedSeed) { showToast('請先在商店選擇種子'); return; }
+  const plot = G.grid[idx];
+  if (plot.state !== 'empty') return;
+
+  const crop = CROPS[G.selectedSeed];
+  const cost = Math.max(1, Math.round(crop.cost * (1 - G.activeBuffs.shopDiscount)));
+  if (G.money < cost) { showToast('💰 金幣不足！'); return; }
+
+  G.money -= cost;
+  G.boughtToday++;
+
+  plot.state     = 'growing';
+  plot.cropId    = G.selectedSeed;
+  plot.daysLeft  = crop.days;
+  plot.totalDays = crop.days;
+  plot.watered   = true; // freshly planted = already watered today
+
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function harvestPlot(idx) {
+  const plot = G.grid[idx];
+  if (plot.state !== 'ready') return;
+
+  const crop = CROPS[plot.cropId];
+  G.inventory[plot.cropId] = (G.inventory[plot.cropId] || 0) + 1;
+  G.harvestedToday++;
+  G.totalHarvested++;
+
+  gainXP(crop.xp);
+
+  Object.assign(plot, makePlot());
+
+  showToast(`收穫 ${crop.emoji} ${crop.name}！ +${crop.xp} XP`);
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function harvestAll() {
+  let count = 0;
+  G.grid.forEach((plot, idx) => {
+    if (plot.state !== 'ready') return;
+    const crop = CROPS[plot.cropId];
+    G.inventory[plot.cropId] = (G.inventory[plot.cropId] || 0) + 1;
+    G.harvestedToday++;
+    G.totalHarvested++;
+    gainXP(crop.xp);
+    Object.assign(plot, makePlot());
+    count++;
+  });
+
+  if (count === 0) { showToast('目前沒有可收穫的作物'); return; }
+  showToast(`🌾 全部收穫！共收穫 ${count} 個作物`);
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function waterPlot(idx) {
+  const plot = G.grid[idx];
+  if (plot.state !== 'growing' || plot.watered) return;
+  plot.watered = true;
+  save();
+  renderGrid(); // lightweight re-render
+}
+
+function clearWithered(idx) {
+  const plot = G.grid[idx];
+  if (plot.state !== 'withered') return;
+  Object.assign(plot, makePlot());
+  save();
+  renderGrid();
+}
+
+function sellCrop(cropId) {
+  const count = G.inventory[cropId] || 0;
+  if (!count) return;
+  const crop   = CROPS[cropId];
+  const earned = Math.round(crop.sell * count * (1 + G.activeBuffs.sellBonus));
+
+  G.money       += earned;
+  G.earnedToday += earned;
+  G.totalEarned += earned;
+  delete G.inventory[cropId];
+
+  showToast(`出售 ${crop.emoji} ×${count}，獲得 +${earned} 💰`);
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function sellAll() {
+  let total = 0;
+  Object.entries(G.inventory).forEach(([id, count]) => {
+    total += Math.round(CROPS[id].sell * count * (1 + G.activeBuffs.sellBonus));
+  });
+  if (!total) return;
+
+  G.money       += total;
+  G.earnedToday += total;
+  G.totalEarned += total;
+  G.inventory    = {};
+
+  showToast(`全部出售！獲得 +${total} 💰`);
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function gainXP(amount) {
+  if (amount <= 0) return;
+  amount = Math.round(amount * (1 + G.activeBuffs.xpBonus));
+  G.xp += amount;
+  while (G.xp >= xpNeeded(G.level)) {
+    G.xp -= xpNeeded(G.level);
+    G.level++;
+    const title = LEVEL_TITLES[Math.min(G.level, LEVEL_TITLES.length - 1)];
+    showToast(`🎉 升級！現在是 Lv.${G.level} ${title}`, 3000);
+    checkTasks();
+  }
+}
+
+// ── Task checks ───────────────────────────
+
+function checkTasks() {
+  makeDailyTasks().forEach(t => {
+    if (G.dailyTasksDone[t.id]) return;
+    if (taskStatValue(t.key) >= t.target) {
+      G.dailyTasksDone[t.id] = true;
+      G.money += t.reward.money;
+      gainXP(t.reward.xp);
+      showToast(`📅 任務完成：${t.title}！`, 3000);
+    }
+  });
+  makeAchievements().forEach(t => {
+    if (G.achievementsDone[t.id]) return;
+    if (taskStatValue(t.key) >= t.target) {
+      G.achievementsDone[t.id] = true;
+      G.money += t.reward.money;
+      gainXP(t.reward.xp);
+      showToast(`🏆 成就解鎖：${t.title}！`, 3500);
+    }
+  });
+}
+
+// ── End Day ───────────────────────────────
+
+function endDay() {
+  const rainDay = WEATHERS[G.weather].bonus > 0;
+
+  // Wither or grow all crops
+  let witheredCount = 0;
+  let outOfSeasonCount = 0;
+  G.grid.forEach(plot => {
+    if (plot.state !== 'growing') return;
+
+    if (!plot.watered && !rainDay && !G.activeBuffs.noWither) {
+      plot.state   = 'withered';
+      plot.watered = false;
+      witheredCount++;
+    } else {
+      plot.daysLeft -= 1 + WEATHERS[G.weather].bonus + G.activeBuffs.extraGrowth;
+      plot.watered   = false;
+      if (plot.daysLeft <= 0) {
+        plot.daysLeft = 0;
+        plot.state    = 'ready';
+      } else {
+        // Out-of-season: 25% daily death chance
+        const crop = CROPS[plot.cropId];
+        if (!crop.seasons.includes(G.season) && Math.random() < 0.25) {
+          plot.state = 'withered';
+          outOfSeasonCount++;
+        }
+      }
+    }
+  });
+
+  if (witheredCount > 0) showToast(`🥀 有 ${witheredCount} 株植物因缺水枯死了！`, 3500);
+  if (outOfSeasonCount > 0) showToast(`🌡️ 有 ${outOfSeasonCount} 株植物因季節不適而枯死了！`, 3500);
+
+  // Advance day
+  G.day++;
+  G.harvestedToday = 0;
+  G.earnedToday    = 0;
+  G.boughtToday    = 0;
+  G.dailyTasksDone = {};
+
+  // Random weather
+  const r = Math.random();
+  let cum  = 0;
+  for (let i = 0; i < WEATHER_WEIGHTS.length; i++) {
+    cum += WEATHER_WEIGHTS[i];
+    if (r < cum) { G.weather = i; break; }
+  }
+
+  // Season change
+  const newSeason = Math.floor((G.day - 1) / SEASON_LENGTH) % 4;
+  if (newSeason !== G.season) {
+    G.season = newSeason;
+    showToast(`${SEASON_ICONS[G.season]} 季節變換：${SEASONS[G.season]}！`, 3000);
+  }
+
+  // New pets for the new day
+  generateDailyPets();
+
+  // Day overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'day-overlay';
+  overlay.innerHTML = `<div class="day-big">第 ${G.day} 天</div><div class="day-sub">${SEASON_ICONS[G.season]}${SEASONS[G.season]}・${WEATHERS[G.weather].icon}${WEATHERS[G.weather].name}</div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 1200);
+
+  if (rainDay) showToast('🌧️ 雨天！作物加速生長，且已自動澆水');
+
+  checkTasks();
+  save();
+  renderAll();
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+
+function showToast(msg, ms = 2200) {
+  const box   = document.getElementById('toast-box');
+  const toast = document.createElement('div');
+  toast.className   = 'toast';
+  toast.textContent = msg;
+  box.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.35s';
+    toast.style.opacity    = '0';
+    setTimeout(() => toast.remove(), 360);
+  }, ms);
+}
+
+// ══════════════════════════════════════════
+//  PET SYSTEM
+// ══════════════════════════════════════════
+
+// ── Pet helpers ───────────────────────────
+
+function getPetLevel(petId) {
+  return G.petLevels[petId] || 1;
+}
+
+function scaledBuffValue(buff, level) {
+  if (buff.type === 'noWither') return buff.value;
+  return buff.value * (1 + 0.3 * (level - 1));
+}
+
+function upgradeCost(level) {
+  return level * 12000;
+}
+
+function formatBuffLabel(buff, value) {
+  switch (buff.type) {
+    case 'xpBonus':      return `採收 XP +${Math.round(value * 100)}%`;
+    case 'sellBonus':    return `販售收益 +${Math.round(value * 100)}%`;
+    case 'shopDiscount': return `種子費用 -${Math.round(value * 100)}%`;
+    case 'extraGrowth':  return `每天多成長 ${value.toFixed(1)} 天`;
+    case 'noWither':     return `植物不會缺水枯死`;
+    default:             return buff.label;
+  }
+}
+
+function applyPetBuff(petId, buff) {
+  const lv = getPetLevel(petId);
+  if (buff.type === 'noWither') {
+    G.activeBuffs.noWither = true;
+  } else {
+    G.activeBuffs[buff.type] = (G.activeBuffs[buff.type] || 0) + scaledBuffValue(buff, lv);
+  }
+}
+
+function reapplyBuffs() {
+  G.activeBuffs = { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false };
+  const counted = new Set();
+
+  // Fed daily pets take priority
+  G.dailyPets.forEach(pet => {
+    if (!pet.fed) return;
+    counted.add(pet.id);
+    applyPetBuff(pet.id, pet.buff);
+  });
+
+  // Owned pets always provide passive buff (skip if already counted above)
+  (G.ownedPets || []).forEach(petId => {
+    if (counted.has(petId)) return;
+    const pt = PET_TYPES.find(p => p.id === petId);
+    if (pt) applyPetBuff(petId, pt.buff);
+  });
+}
+
+function upgradeByPetId(petId) {
+  const lv = getPetLevel(petId);
+  if (lv >= 5) { showToast('✨ 已達最高等級！'); return; }
+  const cost = upgradeCost(lv);
+  if (G.money < cost) { showToast('💰 金幣不足！'); return; }
+  const pt = PET_TYPES.find(p => p.id === petId);
+  G.money -= cost;
+  G.petLevels[petId] = lv + 1;
+  reapplyBuffs();
+  showToast(`${pt?.emoji || ''} ${pt?.name || ''} 升到 Lv.${lv + 1}！`, 2500);
+  save();
+  renderPetScreen();
+  renderAll();
+}
+
+function upgradePet(petIdx) {
+  const pet = G.dailyPets[petIdx];
+  if (!pet || !pet.fed) return;
+  upgradeByPetId(pet.id);
+}
+
+function adoptPet(petIdx) {
+  const pet = G.dailyPets[petIdx];
+  if (!pet || !pet.fed) return;
+  if (!G.ownedPets) G.ownedPets = [];
+  if (G.ownedPets.includes(pet.id)) { showToast(`${pet.emoji} 已經在農場裡了！`); return; }
+  if (G.ownedPets.length >= 5) { showToast('🏡 農場最多容納 5 隻寵物，請先放生一隻！', 3000); return; }
+  G.ownedPets.push(pet.id);
+  reapplyBuffs();
+  showToast(`🐾 ${pet.emoji} ${pet.name} 永久加入了你的農場！`, 3000);
+  save();
+  renderPetScreen();
+  renderAll();
+}
+
+function releasePet(petId) {
+  if (!G.ownedPets) return;
+  const pt = PET_TYPES.find(p => p.id === petId);
+  G.ownedPets = G.ownedPets.filter(id => id !== petId);
+  if (G.viewingOwnedId === petId) G.viewingOwnedId = null;
+  reapplyBuffs();
+  showToast(`🌿 ${pt?.emoji || ''} ${pt?.name || ''} 已放生，祝牠一路順風！`, 3000);
+  save();
+  renderPetScreen();
+  renderAll();
+}
+
+function generateDailyPets() {
+  const shuffled = [...PET_TYPES].sort(() => Math.random() - 0.5);
+  G.dailyPets = shuffled.slice(0, 3).map(p => ({ ...p, fed: false, happiness: 0 }));
+  reapplyBuffs(); // owned pets keep their passive buffs; daily pets start unfed
+}
+
+function openPetScreen() {
+  G.feedingPetIdx  = -1;
+  G.viewingPetIdx  = -1;
+  G.viewingOwnedId = null;
+  document.getElementById('pet-screen').hidden = false;
+  renderPetScreen();
+}
+
+function closePetScreen() {
+  G.feedingPetIdx  = -1;
+  G.viewingPetIdx  = -1;
+  G.viewingOwnedId = null;
+  document.getElementById('pet-screen').hidden = true;
+}
+
+function renderPetScreen() {
+  document.getElementById('pet-screen-day').textContent = G.day;
+  const list = document.getElementById('pet-list');
+  list.innerHTML = '';
+
+  G.dailyPets.forEach((pet, idx) => {
+    const isFeedMode = G.feedingPetIdx === idx;
+    const favCrop    = CROPS[pet.favCrop];
+    const moodEmoji  = pet.fed ? (pet.happiness >= 3 ? '😍' : '😊') : '😐';
+
+    let feedContent;
+    if (pet.fed) {
+      const isViewing = G.viewingPetIdx === idx;
+      if (isViewing) {
+        const lv       = getPetLevel(pet.id);
+        const isMax    = lv >= 5;
+        const eff      = scaledBuffValue(pet.buff, lv);
+        const effLabel = formatBuffLabel(pet.buff, eff);
+        const cost     = upgradeCost(lv);
+        const isOwned  = (G.ownedPets || []).includes(pet.id);
+        feedContent = `
+          <div class="pet-fed-label">💕 已餵食</div>
+          <div class="pet-stat-panel">
+            <div class="pet-stat-lv">⭐ Lv.${lv}</div>
+            <div class="pet-stat-buff">${pet.buff.icon} ${effLabel}</div>
+            ${isMax
+              ? `<div class="pet-stat-maxlv">✨ 已達最高等級</div>`
+              : `<div class="pet-stat-cost">升級費用：${cost} 💰</div>
+                 <button class="pet-upgrade-btn" data-act="upgrade" data-pet="${idx}">⬆ 升到 Lv.${lv + 1}</button>`}
+            ${isOwned
+              ? `<div class="pet-owned-badge">🏡 已收留</div>`
+              : `<button class="pet-adopt-btn" data-act="adopt" data-pet="${idx}">🏠 收留牠</button>`}
+            <button class="food-cancel-btn" data-act="closeView">關閉</button>
+          </div>`;
+      } else {
+        feedContent = `
+          <div class="pet-fed-label">💕 已餵食</div>
+          <button class="pet-view-btn" data-act="view" data-pet="${idx}">📊 點即可查看屬性</button>`;
+      }
+    } else if (isFeedMode) {
+      const items = Object.entries(G.inventory);
+      if (!items.length) {
+        feedContent = `
+          <div class="no-food-msg">背包沒有農作物<br>先回農場收穫吧！</div>
+          <button class="food-cancel-btn" data-act="cancel">取消</button>`;
+      } else {
+        const chips = items.map(([cid, cnt]) => {
+          const c = CROPS[cid];
+          const isFav = cid === pet.favCrop;
+          return `<button class="food-chip${isFav ? ' fav-chip' : ''}" data-act="feed" data-pet="${idx}" data-crop="${cid}">${c.emoji} ${c.name}×${cnt}${isFav ? ' ★' : ''}</button>`;
+        }).join('');
+        feedContent = `
+          <div class="food-select-title">選擇要餵的食物</div>
+          <div class="food-grid">${chips}</div>
+          <button class="food-cancel-btn" data-act="cancel">取消</button>`;
+      }
+    } else {
+      feedContent = `<button class="pet-feed-btn" data-act="open" data-pet="${idx}">🌾 餵食</button>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'pet-card' + (isFeedMode ? ' feeding' : '') + (pet.fed ? ' fed-done' : '');
+    card.innerHTML = `
+      <span class="pet-emoji-big">${pet.emoji}</span>
+      <div class="pet-name">${pet.name}</div>
+      <div class="pet-fav-food">喜歡：${favCrop ? favCrop.emoji + ' ' + favCrop.name : '?'}</div>
+      <div class="pet-buff-tag${pet.fed ? ' active' : ''}">${pet.buff.icon} ${pet.buff.label}</div>
+      <span class="pet-mood">${moodEmoji}</span>
+      ${feedContent}`;
+    list.appendChild(card);
+  });
+
+  list.onclick = e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    if      (btn.dataset.act === 'open')      { G.feedingPetIdx = parseInt(btn.dataset.pet); renderPetScreen(); }
+    else if (btn.dataset.act === 'cancel')    { G.feedingPetIdx = -1; renderPetScreen(); }
+    else if (btn.dataset.act === 'feed')      { feedPet(parseInt(btn.dataset.pet), btn.dataset.crop); }
+    else if (btn.dataset.act === 'view')      { G.viewingPetIdx = parseInt(btn.dataset.pet); renderPetScreen(); }
+    else if (btn.dataset.act === 'closeView') { G.viewingPetIdx = -1; renderPetScreen(); }
+    else if (btn.dataset.act === 'upgrade')   { upgradePet(parseInt(btn.dataset.pet)); }
+    else if (btn.dataset.act === 'adopt')     { adoptPet(parseInt(btn.dataset.pet)); }
+  };
+  renderOwnedPets();
+}
+
+function renderOwnedPets() {
+  const list   = document.getElementById('pet-owned-list');
+  const detail = document.getElementById('pet-owned-detail');
+  if (!list) return;
+
+  const owned = G.ownedPets || [];
+
+  if (!owned.length) {
+    list.innerHTML = '<div class="owned-empty">餵食寵物後點「收留牠」，牠就會永遠住在這裡 🌿</div>';
+    detail.innerHTML = '';
+    G.viewingOwnedId = null;
+    return;
+  }
+
+  list.innerHTML = owned.map(petId => {
+    const pt      = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return '';
+    const lv      = getPetLevel(petId);
+    const viewing = G.viewingOwnedId === petId;
+    return `<div class="owned-pet-card${viewing ? ' viewing' : ''}" data-petid="${petId}">
+      <span class="owned-pet-emoji">${pt.emoji}</span>
+      <div class="owned-pet-name">${pt.name}</div>
+      <div class="owned-pet-lv">⭐ Lv.${lv}</div>
+    </div>`;
+  }).join('');
+
+  list.onclick = e => {
+    const card = e.target.closest('.owned-pet-card');
+    if (!card) return;
+    const petId = card.dataset.petid;
+    G.viewingOwnedId = G.viewingOwnedId === petId ? null : petId;
+    renderOwnedPets();
+  };
+
+  if (G.viewingOwnedId) {
+    const pt = PET_TYPES.find(p => p.id === G.viewingOwnedId);
+    if (!pt) { detail.innerHTML = ''; return; }
+    const lv       = getPetLevel(G.viewingOwnedId);
+    const isMax    = lv >= 5;
+    const eff      = scaledBuffValue(pt.buff, lv);
+    const effLabel = formatBuffLabel(pt.buff, eff);
+    const cost     = upgradeCost(lv);
+    detail.innerHTML = `
+      <div class="owned-detail-inner">
+        <span class="owned-detail-emoji">${pt.emoji}</span>
+        <div class="owned-detail-info">
+          <div class="owned-detail-name">${pt.name}</div>
+          <div class="owned-detail-lv">⭐ Lv.${lv}</div>
+          <div class="owned-detail-buff">${pt.buff.icon} ${effLabel}</div>
+        </div>
+        <div class="owned-detail-actions">
+          ${isMax
+            ? `<div class="pet-stat-maxlv">✨ 最高等級</div>`
+            : `<div class="pet-stat-cost">${cost} 💰</div>
+               <button id="owned-upgrade-btn" class="pet-upgrade-btn">⬆ 升到 Lv.${lv + 1}</button>`}
+          <button id="owned-release-btn" class="pet-release-btn">🌿 放生</button>
+        </div>
+      </div>`;
+    if (!isMax) {
+      document.getElementById('owned-upgrade-btn').onclick = () => upgradeByPetId(G.viewingOwnedId);
+    }
+    document.getElementById('owned-release-btn').onclick = () => releasePet(G.viewingOwnedId);
+  } else {
+    detail.innerHTML = '';
+  }
+}
+
+function feedPet(petIdx, cropId) {
+  const pet  = G.dailyPets[petIdx];
+  const crop = CROPS[cropId];
+  if (!pet || !crop || pet.fed) return;
+  if (!G.inventory[cropId]) return;
+
+  G.inventory[cropId]--;
+  if (G.inventory[cropId] === 0) delete G.inventory[cropId];
+
+  const isFav     = cropId === pet.favCrop;
+  const xpGain    = isFav ? pet.xpBase * 2 : pet.xpBase;
+  const moneyGain = isFav ? 15 : 0;
+
+  pet.fed = true;
+  pet.happiness = isFav ? 3 : 1;
+  G.feedingPetIdx = -1;
+
+  reapplyBuffs();
+
+  gainXP(xpGain);
+  G.money += moneyGain;
+
+  showToast(
+    isFav
+      ? `${pet.emoji} ${pet.name} 最愛的食物！ +${xpGain} XP +${moneyGain} 💰  ${pet.buff.icon}${pet.buff.label}`
+      : `${pet.emoji} ${pet.name} 吃得很開心！ +${xpGain} XP  ${pet.buff.icon}${pet.buff.label}`,
+    3500
+  );
+  save();
+  renderPetScreen();
+  renderAll(); // update buff strip + topbar
+}
+
+// ══════════════════════════════════════════
+//  EVENTS
+// ══════════════════════════════════════════
+
+function handleCell(idx) {
+  const plot = G.grid[idx];
+  if (!plot) return;
+
+  if (G.mode === 'watering') {
+    if (plot.state === 'growing') waterPlot(idx);
+    return;
+  }
+
+  if (G.mode === 'harvest') {
+    if (plot.state === 'ready') harvestPlot(idx);
+    return;
+  }
+
+  // Normal mode
+  if      (plot.state === 'withered')                          clearWithered(idx);
+  else if (plot.state === 'ready')                             harvestPlot(idx);
+  else if (plot.state === 'empty' && G.selectedSeed)          plantSeed(idx);
+  else if (plot.state === 'empty' && !G.selectedSeed)         showToast('請先在商店選擇種子');
+}
+
+function bindEvents() {
+  // Farm grid — hold + drag interaction
+  let isHolding   = false;
+  let lastCellIdx = -1;
+
+  const farmGrid = document.getElementById('farm-grid');
+
+  farmGrid.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); // prevent text selection while dragging
+    const cell = e.target.closest('.plot');
+    if (!cell) return;
+    isHolding   = true;
+    lastCellIdx = parseInt(cell.dataset.idx);
+    handleCell(lastCellIdx);
+  });
+
+  // mouseover fires when entering child elements too, so deduplicate by idx
+  farmGrid.addEventListener('mouseover', e => {
+    if (!isHolding) return;
+    const cell = e.target.closest('.plot');
+    if (!cell) return;
+    const idx = parseInt(cell.dataset.idx);
+    if (idx === lastCellIdx) return; // same cell, skip
+    lastCellIdx = idx;
+    handleCell(idx);
+  });
+
+  document.addEventListener('mouseup', () => { isHolding = false; });
+
+  // Panel tabs
+  document.getElementById('tab-nav').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    if (btn.dataset.tab === 'end') { endDay(); return; }
+    G.activeTab = btn.dataset.tab;
+    renderPanel();
+  });
+
+  // Bottom bar
+  document.getElementById('water-btn').addEventListener('click', () => setMode('watering'));
+  document.getElementById('harvest-all-btn').addEventListener('click', harvestAll);
+  document.getElementById('harvest-single-btn').addEventListener('click', () => setMode('harvest'));
+
+  // Pet screen
+  document.getElementById('pet-btn').addEventListener('click', openPetScreen);
+  document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+
+load();
+bindEvents();
+updateCursor();
+renderAll();

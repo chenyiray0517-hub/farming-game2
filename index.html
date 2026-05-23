@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>種田遊戲</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="tb-left">
+        <span id="day-label">第 <span id="day-num">1</span> 天</span>
+        <span id="money-display">💰 <span id="money-num">500</span></span>
+      </div>
+      <div class="tb-center">
+        <span id="level-display">⭐ Lv.<span id="lv-num">1</span> <span id="lv-title">農業新手</span></span>
+        <div id="xp-wrap">
+          <div id="xp-bar"></div>
+        </div>
+        <span id="xp-label">還差 <span id="xp-rem">150</span> XP</span>
+      </div>
+      <div class="tb-right">
+        <span id="season-badge" class="badge spring">🌸 春</span>
+        <span id="weather-badge" class="badge weather">☀️ 晴天</span>
+      </div>
+    </header>
+
+    <div id="buff-strip"></div>
+    <main id="main">
+      <div id="farm-wrapper">
+        <div id="farm-grid"></div>
+      </div>
+
+      <aside id="panel">
+        <nav id="tab-nav">
+          <button class="tab-btn active" data-tab="shop">🏪 商店</button>
+          <button class="tab-btn" data-tab="warehouse">🏠 倉庫</button>
+          <button class="tab-btn" data-tab="tasks">📋 任務</button>
+          <button class="tab-btn end-btn" data-tab="end">⏭ 結束</button>
+        </nav>
+        <div id="panel-body"></div>
+      </aside>
+    </main>
+
+    <div id="bottom-bar">
+      <button id="water-btn" class="bbar-btn">🪣 澆水</button>
+      <div class="bbar-sep"></div>
+      <span class="bbar-label">收穫：</span>
+      <button id="harvest-all-btn" class="bbar-btn">🌾 全部收穫</button>
+      <button id="harvest-single-btn" class="bbar-btn">☝️ 單一收穫</button>
+    </div>
+
+    <button id="pet-btn">🐾</button>
+    <div id="toast-box"></div>
+    <div id="cursor-follow">🪣</div>
+
+    <!-- Pet Screen (fixed overlay) -->
+    <div id="pet-screen" hidden>
+      <header id="pet-hdr">
+        <button id="pet-back-btn">← 返回農場</button>
+        <div class="pet-hdr-center">
+          <span class="pet-hdr-title">🌿 今日的小動物</span>
+          <span class="pet-hdr-sub">用農作物餵食牠們，明天就會離開</span>
+        </div>
+        <div class="pet-hdr-right">第 <span id="pet-screen-day">1</span> 天</div>
+      </header>
+      <div id="pet-meadow">
+        <div id="pet-clouds">
+          <span class="cloud">☁️</span>
+          <span class="cloud">☁️</span>
+          <span class="cloud">☁️</span>
+        </div>
+        <div id="pet-list"></div>
+        <div id="pet-ground-deco">🌸🌿🌼🌱🌸🌼🌿🌸🌼🌱🌿🌸🌼🌸🌿🌼🌱🌸</div>
+      </div>
+      <div id="pet-owned">
+        <div id="pet-owned-header">🏡 我的動物夥伴</div>
+        <div id="pet-owned-list"></div>
+        <div id="pet-owned-detail"></div>
+      </div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
