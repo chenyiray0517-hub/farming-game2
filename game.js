@@ -76,6 +76,33 @@ const PET_FEEDS = [
   { id: 'feed_growth',   name: '成長飼料', emoji: '🌱', desc: '每天多成長 +0.2 天', cost: 1200, buffType: 'extraGrowth',  boost: 0.2  },
 ];
 
+const PET_EGGS = [
+  {
+    id: 'egg_common',
+    name: '普通蛋', emoji: '🥚', cls: 'egg-common',
+    cost: 2000,
+    grades:  ['common', 'good'],
+    weights: [70, 30],
+    desc: '普通 70%・優良 30%',
+  },
+  {
+    id: 'egg_rare',
+    name: '稀有蛋', emoji: '🥚', cls: 'egg-rare',
+    cost: 6000,
+    grades:  ['good', 'premium', 'legendary'],
+    weights: [55, 35, 10],
+    desc: '優良 55%・高級 35%・傳奇 10%',
+  },
+  {
+    id: 'egg_special',
+    name: '特殊蛋', emoji: '🥚', cls: 'egg-special',
+    cost: 15000,
+    grades:  ['premium', 'legendary', 'mythical'],
+    weights: [50, 35, 15],
+    desc: '高級 50%・傳奇 35%・神話 15%',
+  },
+];
+
 const SEASONS       = ['春', '夏', '秋', '冬'];
 const SEASON_CLASSES = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_ICONS   = ['🌸', '☀️', '🍂', '❄️'];
@@ -1219,7 +1246,7 @@ function feedPet(petIdx, cropId) {
 // ── Pet Shop ──────────────────────────────
 
 function renderPetShop(el) {
-  let html = '<div class="shop-hint">購買飼料並套用到收留的寵物，永久提升其單一技能</div>';
+  let html = '<div class="shop-hint">購買飼料強化寵物，或開蛋獲得新夥伴</div>';
 
   html += '<div class="task-section-title">🏪 飼料商店</div>';
   PET_FEEDS.forEach(feed => {
@@ -1257,9 +1284,22 @@ function renderPetShop(el) {
     });
   }
 
+  html += '<div class="task-section-title" style="margin-top:14px">🥚 寵物蛋</div>';
+  PET_EGGS.forEach(egg => {
+    html += `
+      <div class="egg-shop-card ${egg.cls}">
+        <span class="egg-shop-emoji">${egg.emoji}</span>
+        <div class="egg-shop-name">${egg.name}</div>
+        <div class="egg-shop-desc">${egg.desc}</div>
+        <div class="egg-shop-cost">${egg.cost.toLocaleString()} 💰</div>
+        <button class="egg-open-btn" data-egg="${egg.id}">✨ 購買並開啟</button>
+      </div>`;
+  });
+
   el.innerHTML = html;
   el.querySelectorAll('.feed-buy-btn').forEach(b => b.addEventListener('click', () => buyFeed(b.dataset.feed)));
   el.querySelectorAll('.feed-use-btn').forEach(b => b.addEventListener('click', () => showFeedUseModal(b.dataset.feed)));
+  el.querySelectorAll('.egg-open-btn').forEach(b => b.addEventListener('click', () => openEgg(b.dataset.egg)));
 }
 
 function buyFeed(feedId) {
@@ -1347,6 +1387,115 @@ function applyFeedToPet(feedId, petId) {
   showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 技能提升！（${used + 1}/3）`, 2500);
   save();
   renderAll();
+}
+
+// ── Pet Eggs ──────────────────────────────
+
+function openEgg(eggId) {
+  const egg = PET_EGGS.find(e => e.id === eggId);
+  if (!egg) return;
+  if (G.money < egg.cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+
+  G.money -= egg.cost;
+
+  // Roll grade by cumulative weight
+  const total = egg.weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  let rolledGrade = egg.grades[egg.grades.length - 1];
+  for (let i = 0; i < egg.grades.length; i++) {
+    r -= egg.weights[i];
+    if (r <= 0) { rolledGrade = egg.grades[i]; break; }
+  }
+
+  // Pick random pet of that grade; fallback if mythical not yet implemented
+  let pool = PET_TYPES.filter(p => p.grade === rolledGrade);
+  let mythicalFallback = false;
+  if (!pool.length) {
+    mythicalFallback = true;
+    rolledGrade = 'legendary';
+    pool = PET_TYPES.filter(p => p.grade === rolledGrade);
+  }
+
+  const pet = pool[Math.floor(Math.random() * pool.length)];
+  save();
+  renderAll();
+  showEggResultModal(pet, rolledGrade, mythicalFallback);
+}
+
+function showEggResultModal(pet, grade, mythicalFallback) {
+  document.getElementById('egg-result-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'egg-result-modal';
+
+  const rarity   = RARITIES[grade];
+  const isOwned  = (G.ownedPets || []).includes(pet.id);
+  const isFull   = (G.ownedPets || []).length >= 5;
+
+  const buffLines = [pet.buff, pet.buff2, pet.buff3]
+    .filter(Boolean)
+    .map(b => `<div class="erm-buff">${b.icon} ${b.label}</div>`)
+    .join('');
+
+  const mythNote = mythicalFallback
+    ? '<div class="erm-mythical-note">✨ 神話寵物即將推出！本次以傳奇替代</div>'
+    : '';
+
+  let adoptArea;
+  if (isOwned) {
+    adoptArea = `
+      <div class="erm-already-owned">🏡 已收留此寵物</div>
+      <button class="erm-dismiss" id="erm-ok">確認</button>`;
+  } else if (isFull) {
+    adoptArea = `
+      <div class="erm-full-note">農場已滿（5/5），無法收留</div>
+      <div class="erm-actions">
+        <button class="erm-release" id="erm-release">🌿 放生</button>
+        <button class="erm-dismiss" id="erm-ok">確認</button>
+      </div>`;
+  } else {
+    adoptArea = `
+      <div class="erm-actions">
+        <button class="erm-adopt" id="erm-adopt">🏠 收留牠！</button>
+        <button class="erm-release" id="erm-release">🌿 放生</button>
+      </div>`;
+  }
+
+  modal.innerHTML = `
+    <div class="erm-box grade-${grade}">
+      ${mythNote}
+      <div class="erm-egg-crack">🥚✨</div>
+      <div class="erm-pet-emoji">${pet.emoji}</div>
+      <div class="erm-grade-badge">
+        <span class="rarity-badge" style="color:${rarity.badgeColor};background:${rarity.badgeBg};font-size:13px;padding:3px 12px">${rarity.name}</span>
+      </div>
+      <div class="erm-pet-name">${pet.name}</div>
+      <div class="erm-buffs">${buffLines}</div>
+      ${adoptArea}
+    </div>`;
+
+  if (!isOwned && !isFull) {
+    modal.querySelector('#erm-adopt').onclick = () => {
+      if (!G.ownedPets) G.ownedPets = [];
+      G.ownedPets.push(pet.id);
+      reapplyBuffs();
+      SFX.adopt();
+      showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 3000);
+      save();
+      renderAll();
+      modal.remove();
+    };
+  }
+  const releaseBtn = modal.querySelector('#erm-release');
+  if (releaseBtn) {
+    releaseBtn.onclick = () => {
+      showToast(`🌿 ${pet.emoji} ${pet.name} 放生了...`, 2000);
+      modal.remove();
+    };
+  }
+  const okBtn = modal.querySelector('#erm-ok');
+  if (okBtn) okBtn.onclick = () => modal.remove();
+
+  document.body.appendChild(modal);
 }
 
 // ══════════════════════════════════════════

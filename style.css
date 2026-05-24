@@ -977,6 +977,127 @@ body.harvest-mode  * { cursor: none !important; }
 /* feed boost label in owned pet detail */
 .owned-feed-boost { color: #e65100 !important; font-size: 11px; }
 
+/* ── Pet Eggs Shop ── */
+.egg-shop-card {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  text-align: center;
+  border: 2.5px solid;
+  transition: transform 0.15s;
+}
+.egg-shop-card:hover { transform: translateY(-2px); }
+
+.egg-common  { border-color: #bdbdbd; background: linear-gradient(135deg, #fafafa, #f0f0f0); }
+.egg-rare    { border-color: #42a5f5; background: linear-gradient(135deg, #e3f2fd, #f0f8ff); }
+.egg-special { border-color: #ab47bc; background: linear-gradient(135deg, #f3e5f5, #fdf5ff); }
+
+.egg-shop-emoji { font-size: 32px; display: block; margin-bottom: 4px; }
+.egg-shop-name  { font-size: 14px; font-weight: 800; color: #2c3e50; }
+.egg-shop-desc  { font-size: 10px; color: #888; margin: 3px 0 6px; line-height: 1.7; }
+.egg-shop-cost  { font-size: 12px; font-weight: 700; color: #e53935; margin-bottom: 7px; }
+
+.egg-open-btn {
+  padding: 6px 18px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  transition: filter 0.14s;
+}
+.egg-common  .egg-open-btn { background: linear-gradient(135deg, #757575, #424242); }
+.egg-rare    .egg-open-btn { background: linear-gradient(135deg, #1565c0, #0d47a1); }
+.egg-special .egg-open-btn { background: linear-gradient(135deg, #6a1b9a, #4a148c); }
+.egg-open-btn:hover { filter: brightness(1.18); }
+
+/* ── Egg Result Modal ── */
+#egg-result-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.erm-box {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 26px;
+  min-width: 260px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 3px solid transparent;
+  animation: erm-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.erm-box.grade-common    { border-color: #bdbdbd; }
+.erm-box.grade-good      { border-color: #66bb6a; }
+.erm-box.grade-premium   { border-color: #42a5f5; box-shadow: 0 12px 40px rgba(66,165,245,0.35); }
+.erm-box.grade-legendary { border-color: #ab47bc; box-shadow: 0 12px 40px rgba(171,71,188,0.45); }
+.erm-box.grade-mythical  { border-color: #ff7043; box-shadow: 0 12px 40px rgba(255,112,67,0.45); }
+
+@keyframes erm-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.erm-egg-crack {
+  font-size: 24px;
+  margin-bottom: 6px;
+  display: block;
+  animation: erm-shake 0.35s ease;
+}
+@keyframes erm-shake {
+  0%,100% { transform: rotate(0deg); }
+  25%     { transform: rotate(-10deg); }
+  75%     { transform: rotate(10deg); }
+}
+
+.erm-pet-emoji   { font-size: 76px; display: block; line-height: 1.1; margin-bottom: 8px; }
+.erm-grade-badge { margin-bottom: 6px; }
+.erm-pet-name    { font-size: 19px; font-weight: 800; color: #2c3e50; margin-bottom: 8px; }
+.erm-buffs       { margin-bottom: 14px; }
+.erm-buff        { font-size: 12px; color: #555; margin-bottom: 3px; }
+
+.erm-mythical-note {
+  font-size: 11px; font-weight: 700; color: #6a1b9a;
+  background: #f3e5f5; border-radius: 8px;
+  padding: 4px 10px; margin-bottom: 10px; display: inline-block;
+}
+.erm-already-owned { font-size: 12px; color: #388e3c; font-weight: 700; margin-bottom: 10px; }
+.erm-full-note     { font-size: 12px; color: #e53935; margin-bottom: 10px; }
+
+.erm-actions { display: flex; gap: 10px; justify-content: center; }
+
+.erm-adopt {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff; border: none; border-radius: 20px;
+  cursor: pointer; font-size: 14px; font-weight: 700;
+  transition: filter 0.14s;
+  box-shadow: 0 3px 10px rgba(76,175,80,0.4);
+}
+.erm-adopt:hover { filter: brightness(1.1); }
+
+.erm-release {
+  padding: 10px 18px;
+  background: transparent; border: 2px solid #ddd;
+  border-radius: 20px; cursor: pointer;
+  font-size: 13px; color: #888; transition: all 0.13s;
+}
+.erm-release:hover { border-color: #bbb; color: #555; }
+
+.erm-dismiss {
+  padding: 10px 22px;
+  background: #f5f5f5; border: 2px solid #ddd;
+  border-radius: 20px; cursor: pointer;
+  font-size: 13px; color: #666; transition: all 0.13s;
+}
+.erm-dismiss:hover { background: #ebebeb; }
+
 #pet-ground-deco {
   position: absolute;
   bottom: 0;
