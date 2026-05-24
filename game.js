@@ -69,6 +69,13 @@ const PET_TYPES = [
   { id: 'shenlong', name: '神龍',   emoji: '🐲',    grade: 'legendary', favCrop: 'pineapple', xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'sellBonus',    value: 0.6,  icon: '💰', label: '販售收益 +60%'    }, buff2: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' }, buff3: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
 ];
 
+const PET_FEEDS = [
+  { id: 'feed_xp',       name: '智慧飼料', emoji: '⭐', desc: '採收 XP +5%',      cost: 800,  buffType: 'xpBonus',      boost: 0.05 },
+  { id: 'feed_sell',     name: '財富飼料', emoji: '💎', desc: '販售收益 +5%',     cost: 1000, buffType: 'sellBonus',    boost: 0.05 },
+  { id: 'feed_discount', name: '節儉飼料', emoji: '🏷️', desc: '種子費用 -5%',     cost: 900,  buffType: 'shopDiscount', boost: 0.05 },
+  { id: 'feed_growth',   name: '成長飼料', emoji: '🌱', desc: '每天多成長 +0.2 天', cost: 1200, buffType: 'extraGrowth',  boost: 0.2  },
+];
+
 const SEASONS       = ['春', '夏', '秋', '冬'];
 const SEASON_CLASSES = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_ICONS   = ['🌸', '☀️', '🍂', '❄️'];
@@ -204,6 +211,8 @@ const DEFAULT_STATE = () => ({
   petLevels:        {},
   ownedPets:        [],
   activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false },
+  feedInventory: {},
+  petFeedBoosts: {},
 });
 
 let G = DEFAULT_STATE();
@@ -254,6 +263,8 @@ function load() {
   G.feedingPetIdx  = -1; // always reset transient state
   G.viewingPetIdx  = -1;
   G.viewingOwnedId = null;
+  if (!G.feedInventory) G.feedInventory = {};
+  if (!G.petFeedBoosts) G.petFeedBoosts = {};
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -392,6 +403,7 @@ function renderPanel() {
   if      (G.activeTab === 'shop')      renderShop(body);
   else if (G.activeTab === 'warehouse') renderWarehouse(body);
   else if (G.activeTab === 'tasks')     renderTasks(body);
+  else if (G.activeTab === 'petshop')   renderPetShop(body);
 }
 
 function renderBottomBar() {
@@ -887,12 +899,19 @@ function reapplyBuffs() {
 
   // Owned pets always provide passive buff (skip if already counted above)
   (G.ownedPets || []).forEach(petId => {
-    if (counted.has(petId)) return;
-    const pt = PET_TYPES.find(p => p.id === petId);
-    if (!pt) return;
-    applyPetBuff(petId, pt.buff);
-    if (pt.buff2) applyPetBuff(petId, pt.buff2);
-    if (pt.buff3) applyPetBuff(petId, pt.buff3);
+    if (!counted.has(petId)) {
+      const pt = PET_TYPES.find(p => p.id === petId);
+      if (pt) {
+        applyPetBuff(petId, pt.buff);
+        if (pt.buff2) applyPetBuff(petId, pt.buff2);
+        if (pt.buff3) applyPetBuff(petId, pt.buff3);
+      }
+    }
+    // Feed boosts are permanent upgrades — always apply for owned pets
+    const boosts = (G.petFeedBoosts || {})[petId] || {};
+    Object.entries(boosts).forEach(([type, val]) => {
+      G.activeBuffs[type] = (G.activeBuffs[type] || 0) + val;
+    });
   });
 }
 
@@ -1117,6 +1136,13 @@ function renderOwnedPets() {
     const cost     = upgradeCost(lv);
     const dg     = pt.grade || 'common';
     const dgInfo = RARITIES[dg];
+    const feedBoostLines = Object.entries((G.petFeedBoosts || {})[G.viewingOwnedId] || {})
+      .filter(([, v]) => v > 0)
+      .map(([type, val]) => {
+        const fd  = PET_FEEDS.find(f => f.buffType === type);
+        const lbl = type === 'extraGrowth' ? `+${val.toFixed(1)}天/日` : `+${Math.round(val * 100)}%`;
+        return `<div class="owned-detail-buff owned-feed-boost">${fd?.emoji || '🍖'} ${fd?.name || ''} ${lbl}</div>`;
+      }).join('');
     detail.innerHTML = `
       <div class="owned-detail-inner">
         <span class="owned-detail-emoji">${pt.emoji}</span>
@@ -1126,6 +1152,7 @@ function renderOwnedPets() {
           <div class="owned-detail-buff">${pt.buff.icon} ${effLabel}</div>
           ${eff2Label ? `<div class="owned-detail-buff">${pt.buff2.icon} ${eff2Label}</div>` : ''}
           ${eff3Label ? `<div class="owned-detail-buff">${pt.buff3.icon} ${eff3Label}</div>` : ''}
+          ${feedBoostLines}
         </div>
         <div class="owned-detail-actions">
           ${isMax
@@ -1185,6 +1212,128 @@ function feedPet(petIdx, cropId) {
   save();
   renderPetScreen();
   renderAll(); // update buff strip + topbar
+}
+
+// ── Pet Shop ──────────────────────────────
+
+function renderPetShop(el) {
+  let html = '<div class="shop-hint">購買飼料並套用到收留的寵物，永久提升其單一技能</div>';
+
+  html += '<div class="task-section-title">🏪 飼料商店</div>';
+  PET_FEEDS.forEach(feed => {
+    html += `
+      <div class="feed-shop-item">
+        <span class="feed-emoji">${feed.emoji}</span>
+        <div class="feed-info">
+          <div class="feed-name">${feed.name}</div>
+          <div class="feed-desc">${feed.desc}</div>
+        </div>
+        <div class="feed-right">
+          <div class="feed-cost">-${feed.cost} 💰</div>
+          <button class="feed-buy-btn" data-feed="${feed.id}">購買</button>
+        </div>
+      </div>`;
+  });
+
+  const ownedFeeds = Object.entries(G.feedInventory || {}).filter(([, cnt]) => cnt > 0);
+  html += '<div class="task-section-title" style="margin-top:14px">🎒 飼料庫存</div>';
+  if (!ownedFeeds.length) {
+    html += '<div class="empty-msg" style="padding:12px 0">尚未購買任何飼料</div>';
+  } else {
+    ownedFeeds.forEach(([feedId, cnt]) => {
+      const feed = PET_FEEDS.find(f => f.id === feedId);
+      if (!feed) return;
+      html += `
+        <div class="feed-inv-item">
+          <span class="feed-emoji">${feed.emoji}</span>
+          <div class="feed-info">
+            <div class="feed-name">${feed.name} <span class="feed-cnt">×${cnt}</span></div>
+            <div class="feed-desc">${feed.desc}</div>
+          </div>
+          <button class="feed-use-btn" data-feed="${feedId}">使用</button>
+        </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+  el.querySelectorAll('.feed-buy-btn').forEach(b => b.addEventListener('click', () => buyFeed(b.dataset.feed)));
+  el.querySelectorAll('.feed-use-btn').forEach(b => b.addEventListener('click', () => showFeedUseModal(b.dataset.feed)));
+}
+
+function buyFeed(feedId) {
+  const feed = PET_FEEDS.find(f => f.id === feedId);
+  if (!feed) return;
+  if (G.money < feed.cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+  G.money -= feed.cost;
+  G.feedInventory[feedId] = (G.feedInventory[feedId] || 0) + 1;
+  SFX.sell();
+  showToast(`購買了 ${feed.emoji} ${feed.name}！`);
+  save();
+  renderAll();
+}
+
+function showFeedUseModal(feedId) {
+  const feed  = PET_FEEDS.find(f => f.id === feedId);
+  const owned = G.ownedPets || [];
+  if (!feed || !(G.feedInventory[feedId] > 0)) return;
+  if (!owned.length) { showToast('先收留一隻寵物再使用飼料！', 2500); return; }
+
+  document.getElementById('feed-use-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'feed-use-modal';
+
+  const petList = owned.map(petId => {
+    const pt = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return '';
+    const lv  = getPetLevel(petId);
+    const cur = ((G.petFeedBoosts || {})[petId] || {})[feed.buffType] || 0;
+    const curLabel = cur > 0
+      ? `(已加強 ${feed.buffType === 'extraGrowth' ? '+' + cur.toFixed(1) + '天/日' : '+' + Math.round(cur * 100) + '%'})`
+      : '';
+    return `
+      <div class="fum-pet">
+        <span class="fum-pet-emoji">${pt.emoji}</span>
+        <div class="fum-pet-info">
+          <div class="fum-pet-name">${pt.name} Lv.${lv}</div>
+          ${curLabel ? `<div class="fum-pet-boost">${curLabel}</div>` : ''}
+        </div>
+        <button class="fum-apply-btn" data-petid="${petId}">套用</button>
+      </div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="fum-box">
+      <div class="fum-title">${feed.emoji} ${feed.name}</div>
+      <div class="fum-desc">${feed.desc}（永久）</div>
+      <div class="fum-label">選擇要強化的寵物</div>
+      <div class="fum-pet-list">${petList}</div>
+      <button class="fum-cancel" id="fum-cancel">取消</button>
+    </div>`;
+
+  modal.querySelector('#fum-cancel').onclick = () => modal.remove();
+  modal.querySelectorAll('.fum-apply-btn').forEach(btn => {
+    btn.onclick = () => { modal.remove(); applyFeedToPet(feedId, btn.dataset.petid); };
+  });
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function applyFeedToPet(feedId, petId) {
+  const feed = PET_FEEDS.find(f => f.id === feedId);
+  const pt   = PET_TYPES.find(p => p.id === petId);
+  if (!feed || !pt || !(G.feedInventory[feedId] > 0)) return;
+
+  G.feedInventory[feedId]--;
+  if (G.feedInventory[feedId] <= 0) delete G.feedInventory[feedId];
+
+  if (!G.petFeedBoosts[petId]) G.petFeedBoosts[petId] = {};
+  G.petFeedBoosts[petId][feed.buffType] = (G.petFeedBoosts[petId][feed.buffType] || 0) + feed.boost;
+
+  reapplyBuffs();
+  SFX.feedPet();
+  showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 技能提升了！`, 2500);
+  save();
+  renderAll();
 }
 
 // ══════════════════════════════════════════

@@ -846,6 +846,130 @@ body.harvest-mode  * { cursor: none !important; }
 }
 .sqm-confirm:hover { filter: brightness(1.1); }
 
+/* ── Pet Shop (飼料) ── */
+.feed-shop-item,
+.feed-inv-item {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 9px;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+  gap: 8px;
+}
+
+.feed-emoji { font-size: 24px; flex-shrink: 0; }
+
+.feed-info  { flex: 1; }
+.feed-name  { font-weight: 700; font-size: 13px; color: #2c3e50; }
+.feed-desc  { font-size: 11px; color: #888; margin-top: 1px; }
+.feed-cnt   { font-weight: 600; color: var(--green-dark); }
+
+.feed-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.feed-cost  { font-size: 11px; color: #e53935; font-weight: 600; }
+
+.feed-buy-btn {
+  padding: 5px 11px;
+  background: linear-gradient(135deg, var(--gold), #e09300);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: filter 0.14s;
+}
+.feed-buy-btn:hover { filter: brightness(1.1); }
+
+.feed-use-btn {
+  padding: 5px 11px;
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+.feed-use-btn:hover { background: #388e3c; }
+
+/* ── Feed Use Modal ── */
+#feed-use-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fum-box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px 24px;
+  min-width: 260px;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.fum-title  { font-size: 17px; font-weight: 800; color: #2c3e50; }
+.fum-desc   { font-size: 12px; color: #43a047; font-weight: 600; }
+.fum-label  { font-size: 12px; color: #888; }
+
+.fum-pet-list { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+
+.fum-pet {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 8px 10px;
+  gap: 8px;
+  text-align: left;
+}
+
+.fum-pet-emoji  { font-size: 24px; flex-shrink: 0; }
+.fum-pet-info   { flex: 1; }
+.fum-pet-name   { font-size: 13px; font-weight: 700; color: #2c3e50; }
+.fum-pet-boost  { font-size: 11px; color: #888; margin-top: 1px; }
+
+.fum-apply-btn {
+  padding: 5px 13px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: filter 0.13s;
+}
+.fum-apply-btn:hover { filter: brightness(1.1); }
+
+.fum-cancel {
+  padding: 7px 22px;
+  border: 2px solid #ddd;
+  border-radius: 16px;
+  background: transparent;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.fum-cancel:hover { border-color: #bbb; color: #555; }
+
+/* feed boost label in owned pet detail */
+.owned-feed-boost { color: #e65100 !important; font-size: 11px; }
+
 #pet-ground-deco {
   position: absolute;
   bottom: 0;
