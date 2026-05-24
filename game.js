@@ -369,7 +369,7 @@ function renderGrid() {
 
       const dTag = document.createElement('span');
       dTag.className = 'days-tag';
-      dTag.textContent = plot.daysLeft + '天';
+      dTag.textContent = Math.round(plot.daysLeft) + '天';
       cell.appendChild(dTag);
 
     } else if (plot.state === 'ready') {
@@ -478,7 +478,7 @@ function renderWarehouse(el) {
   html += `<button class="sell-all-btn">全部出售 (+${total} 💰)</button>`;
   el.innerHTML = html;
 
-  el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => sellCrop(b.dataset.crop)));
+  el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => showSellQtyModal(b.dataset.crop)));
   el.querySelector('.sell-all-btn').addEventListener('click', sellAll);
 }
 
@@ -601,8 +601,9 @@ function clearWithered(idx) {
   renderGrid();
 }
 
-function sellCrop(cropId) {
-  const count = G.inventory[cropId] || 0;
+function sellCrop(cropId, qty) {
+  const available = G.inventory[cropId] || 0;
+  const count = (qty !== undefined) ? Math.min(qty, available) : available;
   if (!count) return;
   const crop   = CROPS[cropId];
   const earned = Math.round(crop.sell * count * (1 + G.activeBuffs.sellBonus));
@@ -610,13 +611,55 @@ function sellCrop(cropId) {
   G.money       += earned;
   G.earnedToday += earned;
   G.totalEarned += earned;
-  delete G.inventory[cropId];
+  G.inventory[cropId] -= count;
+  if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
 
   SFX.sell();
   showToast(`出售 ${crop.emoji} ×${count}，獲得 +${earned} 💰`);
   checkTasks();
   save();
   renderAll();
+}
+
+function showSellQtyModal(cropId) {
+  const crop = CROPS[cropId];
+  const max  = G.inventory[cropId] || 0;
+  if (!max) return;
+
+  document.getElementById('sell-qty-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'sell-qty-modal';
+  let qty = 1;
+
+  function renderModal() {
+    const earned = Math.round(crop.sell * qty * (1 + G.activeBuffs.sellBonus));
+    modal.innerHTML = `
+      <div class="sqm-box">
+        <div class="sqm-title">${crop.emoji} ${crop.name} 出售</div>
+        <div class="sqm-stock">持有：${max} 個</div>
+        <div class="sqm-controls">
+          <button class="sqm-btn" id="sqm-minus">－</button>
+          <span class="sqm-qty">${qty}</span>
+          <button class="sqm-btn" id="sqm-plus">＋</button>
+        </div>
+        <div class="sqm-all-hint">或 <button class="sqm-max-btn" id="sqm-max">全部 (${max})</button></div>
+        <div class="sqm-total">合計 +${earned} 💰</div>
+        <div class="sqm-actions">
+          <button class="sqm-cancel" id="sqm-cancel">取消</button>
+          <button class="sqm-confirm" id="sqm-confirm">出售</button>
+        </div>
+      </div>`;
+    modal.querySelector('#sqm-minus').onclick   = () => { qty = Math.max(1, qty - 1); renderModal(); };
+    modal.querySelector('#sqm-plus').onclick    = () => { qty = Math.min(max, qty + 1); renderModal(); };
+    modal.querySelector('#sqm-max').onclick     = () => { qty = max; renderModal(); };
+    modal.querySelector('#sqm-cancel').onclick  = () => modal.remove();
+    modal.querySelector('#sqm-confirm').onclick = () => { modal.remove(); sellCrop(cropId, qty); };
+  }
+
+  renderModal();
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function sellAll() {
@@ -968,12 +1011,12 @@ function renderPetScreen() {
     } else if (isFeedMode) {
       const allItems = Object.entries(G.inventory);
       const eligible = pet.foodRarities
-        ? allItems.filter(([cid]) => pet.foodRarities.includes(CROPS[cid].rarity))
-        : allItems;
+        ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+        : allItems.filter(([, cnt]) => cnt >= 10);
       if (!eligible.length) {
         const hint = pet.foodRarities
-          ? '背包沒有傳奇或神話農作物<br>需種植傳奇稀有度以上的作物'
-          : '背包沒有農作物<br>先回農場收穫吧！';
+          ? '沒有足夠的傳奇或神話農作物<br>每次餵食需要 10 個相同作物'
+          : '背包沒有足夠的農作物<br>每次餵食需要 10 個相同作物';
         feedContent = `
           <div class="no-food-msg">${hint}</div>
           <button class="food-cancel-btn" data-act="cancel">取消</button>`;
@@ -981,10 +1024,11 @@ function renderPetScreen() {
         const chips = eligible.map(([cid, cnt]) => {
           const c = CROPS[cid];
           const isFav = cid === pet.favCrop;
-          return `<button class="food-chip${isFav ? ' fav-chip' : ''}" data-act="feed" data-pet="${idx}" data-crop="${cid}">${c.emoji} ${c.name}×${cnt}${isFav ? ' ★' : ''}</button>`;
+          return `<button class="food-chip${isFav ? ' fav-chip' : ''}" data-act="feed" data-pet="${idx}" data-crop="${cid}">${c.emoji} ${c.name} ×${cnt}${isFav ? ' ★' : ''}</button>`;
         }).join('');
         feedContent = `
           <div class="food-select-title">選擇要餵的食物</div>
+          <div class="food-cost-note">每次消耗 10 個</div>
           <div class="food-grid">${chips}</div>
           <button class="food-cancel-btn" data-act="cancel">取消</button>`;
       }
@@ -1104,15 +1148,19 @@ function feedPet(petIdx, cropId) {
   const pet  = G.dailyPets[petIdx];
   const crop = CROPS[cropId];
   if (!pet || !crop || pet.fed) return;
-  if (!G.inventory[cropId]) return;
+  if (!G.inventory[cropId] || G.inventory[cropId] < 10) {
+    SFX.error();
+    showToast('需要 10 個相同作物才能餵食！', 2000);
+    return;
+  }
   if (pet.foodRarities && !pet.foodRarities.includes(crop.rarity)) {
     SFX.error();
     showToast(`${pet.emoji} ${pet.name} 只吃傳奇或神話作物！`, 2500);
     return;
   }
 
-  G.inventory[cropId]--;
-  if (G.inventory[cropId] === 0) delete G.inventory[cropId];
+  G.inventory[cropId] -= 10;
+  if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
 
   const isFav     = cropId === pet.favCrop;
   const xpGain    = isFav ? pet.xpBase * 2 : pet.xpBase;
