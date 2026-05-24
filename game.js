@@ -149,7 +149,8 @@ function xpNeeded(level) { return level * 150 + 50; }
 //  AUDIO / SFX
 // ══════════════════════════════════════════
 
-let sfxMuted = localStorage.getItem('farm_sfx_muted') === '1';
+let sfxMuted        = localStorage.getItem('farm_sfx_muted') === '1';
+let isTouchPlanting = false;
 
 const SFX = (() => {
   let ctx = null;
@@ -429,6 +430,12 @@ function renderGrid() {
     } else if (plot.state === 'withered') {
       cell.textContent = '🥀';
       cell.title = '點擊清除枯死的植物';
+
+    } else if (plot.state === 'empty' && isTouchPlanting && G.selectedSeed) {
+      const hint = document.createElement('span');
+      hint.className = 'seed-hint';
+      hint.textContent = CROPS[G.selectedSeed].emoji;
+      cell.appendChild(hint);
     }
 
     grid.appendChild(cell);
@@ -1716,6 +1723,50 @@ function bindEvents() {
   });
 
   document.addEventListener('mouseup', () => { isHolding = false; });
+
+  // Touch planting — press to show seed hints, drag to plant
+  let lastTouchCellIdx = -1;
+
+  function touchCellFromPoint(touch) {
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    return el?.closest('.plot');
+  }
+
+  function enterTouchPlanting() {
+    if (!G.selectedSeed || G.mode !== 'normal') return;
+    isTouchPlanting = true;
+    farmGrid.classList.add('touch-planting');
+    renderFarm();
+  }
+
+  function exitTouchPlanting() {
+    isTouchPlanting = false;
+    farmGrid.classList.remove('touch-planting');
+    renderFarm();
+    lastTouchCellIdx = -1;
+  }
+
+  farmGrid.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const cell = touchCellFromPoint(e.touches[0]);
+    if (!cell) return;
+    enterTouchPlanting();
+    lastTouchCellIdx = parseInt(cell.dataset.idx);
+    handleCell(lastTouchCellIdx);
+  }, { passive: false });
+
+  farmGrid.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const cell = touchCellFromPoint(e.touches[0]);
+    if (!cell) return;
+    const idx = parseInt(cell.dataset.idx);
+    if (idx === lastTouchCellIdx) return;
+    lastTouchCellIdx = idx;
+    handleCell(idx);
+  }, { passive: false });
+
+  farmGrid.addEventListener('touchend',   exitTouchPlanting);
+  farmGrid.addEventListener('touchcancel', exitTouchPlanting);
 
   // Panel tabs
   document.getElementById('tab-nav').addEventListener('click', e => {
