@@ -192,17 +192,20 @@ const SFX = (() => {
   }
 
   return {
-    plant()    { note(220, 0.1, 0.2, 'triangle'); note(330, 0.08, 0.12, 'triangle', 0.05); },
-    water()    { sweep(700, 250, 0.28, 0.15); sweep(500, 180, 0.22, 0.1, 'sine', 0.07); },
-    harvest()  { note(523, 0.2, 0.22); note(659, 0.2, 0.2, 'sine', 0.08); note(784, 0.35, 0.25, 'sine', 0.16); },
-    sell()     { [523, 659, 784].forEach((f, i) => note(f, 0.12, 0.2, 'triangle', i * 0.055)); },
-    levelUp()  { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.35, 0.28, 'sine', i * 0.1)); },
-    taskDone() { note(784, 0.15, 0.22, 'sine'); note(1047, 0.3, 0.28, 'sine', 0.12); },
-    endDay()   { note(349, 0.7, 0.22, 'sine'); note(440, 0.5, 0.18, 'sine', 0.22); },
-    feedPet()  { note(880, 0.1, 0.18, 'sine'); note(1100, 0.15, 0.2, 'sine', 0.08); },
-    adopt()    { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
-    error()    { note(130, 0.25, 0.22, 'square'); },
-    wither()   { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
+    plant()       { note(220, 0.1, 0.2, 'triangle'); note(330, 0.08, 0.12, 'triangle', 0.05); },
+    water()       { sweep(700, 250, 0.28, 0.15); sweep(500, 180, 0.22, 0.1, 'sine', 0.07); },
+    harvest()     { note(523, 0.2, 0.22); note(659, 0.2, 0.2, 'sine', 0.08); note(784, 0.35, 0.25, 'sine', 0.16); },
+    sell()        { [523, 659, 784].forEach((f, i) => note(f, 0.12, 0.2, 'triangle', i * 0.055)); },
+    levelUp()     { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.35, 0.28, 'sine', i * 0.1)); },
+    petLevelUp()  { sweep(440, 880, 0.12, 0.22, 'triangle'); [659, 880, 1100].forEach((f, i) => note(f, 0.25, 0.2, 'triangle', 0.1 + i * 0.08)); },
+    taskDone()    { note(784, 0.15, 0.22, 'sine'); note(1047, 0.3, 0.28, 'sine', 0.12); },
+    endDay()      { note(349, 0.7, 0.22, 'sine'); note(440, 0.5, 0.18, 'sine', 0.22); },
+    feedPet()     { note(880, 0.1, 0.18, 'sine'); note(1100, 0.15, 0.2, 'sine', 0.08); },
+    eggFeed()     { sweep(300, 600, 0.15, 0.2, 'sine'); note(800, 0.2, 0.18, 'sine', 0.15); note(1000, 0.2, 0.2, 'sine', 0.28); },
+    gacha()       { sweep(200, 1200, 0.35, 0.25, 'sawtooth'); note(1047, 0.4, 0.3, 'sine', 0.3); note(1319, 0.5, 0.28, 'sine', 0.45); },
+    adopt()       { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
+    error()       { note(130, 0.25, 0.22, 'square'); },
+    wither()      { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
   };
 })();
 
@@ -961,6 +964,7 @@ function upgradeByPetId(petId) {
   G.money -= cost;
   G.petLevels[petId] = lv + 1;
   reapplyBuffs();
+  SFX.petLevelUp();
   showToast(`${pt?.emoji || ''} ${pt?.name || ''} 升到 Lv.${lv + 1}！`, 2500);
   save();
   renderPetScreen();
@@ -1428,6 +1432,7 @@ function openEgg(eggId) {
   if (!egg) return;
   if (G.money < egg.cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
   G.money -= egg.cost;
+  SFX.gacha();
   const { pet, grade, mythicalFallback } = rollEggResult(egg);
   save();
   renderAll();
@@ -1440,6 +1445,7 @@ function openEggMulti(eggId) {
   const totalCost = egg.cost * 10;
   if (G.money < totalCost) { SFX.error(); showToast('💰 金幣不足！'); return; }
   G.money -= totalCost;
+  SFX.gacha();
   const results = Array.from({ length: 10 }, () => rollEggResult(egg));
   save();
   renderAll();
@@ -1513,6 +1519,7 @@ function showEggResultModal(pet, grade, mythicalFallback) {
       if (G.money < feedCost) { SFX.error(); showToast('💰 金幣不足，無法餵養！'); return; }
       G.money -= feedCost;
       fed = true;
+      SFX.eggFeed();
       save();
       renderAll();
       render();
@@ -1618,6 +1625,7 @@ function showEggMultiResultModal(results) {
         if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
         G.money -= cost;
         fedSet.add(idx);
+        SFX.eggFeed();
         save();
         renderAll();
         render();
