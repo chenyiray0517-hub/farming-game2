@@ -635,6 +635,18 @@ body.harvest-mode  * { cursor: none !important; }
 .pet-name      { font-size: 17px; font-weight: 700; margin-bottom: 3px; color: #2c3e50; }
 .pet-fav-food  { font-size: 12px; color: #999; margin-bottom: 4px; }
 
+.pet-food-restrict {
+  font-size: 11px;
+  color: #6a1b9a;
+  font-weight: 700;
+  background: #f3e5f5;
+  border: 1.5px solid #ab47bc;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
 .pet-buff-tag {
   display: inline-block;
   padding: 3px 10px;
@@ -662,6 +674,17 @@ body.harvest-mode  * { cursor: none !important; }
   color: #1565c0;
 }
 .pet-stat-buff2 { color: #1565c0; }
+.pet-buff3-tag {
+  background: #e0f7fa;
+  border-color: #4dd0e1;
+  color: #006064;
+}
+.pet-buff3-tag.active {
+  background: rgba(0,188,212,0.12);
+  border-color: #00bcd4;
+  color: #006064;
+}
+.pet-stat-buff3 { color: #006064; }
 .pet-mood      { font-size: 26px; display: block; margin-bottom: 12px; }
 
 .pet-feed-btn {
