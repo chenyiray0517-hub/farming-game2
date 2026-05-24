@@ -29,7 +29,13 @@ const CROPS = {
   tomato:      { id: 'tomato',      name: '番茄',   emoji: '🍅', cost: 35, sell: 95,  days: 4, xp: 28, minLevel: 79,  seasons: [1],       rarity: 'premium' },
   watermelon:  { id: 'watermelon',  name: '西瓜',   emoji: '🍉', cost: 42, sell: 120, days: 5, xp: 37, minLevel: 86,  seasons: [1],       rarity: 'premium' },
   peach:       { id: 'peach',       name: '桃子',   emoji: '🍑', cost: 43, sell: 120, days: 5, xp: 38, minLevel: 93,  seasons: [0, 1],    rarity: 'premium' },
-  pumpkin:     { id: 'pumpkin',     name: '南瓜',   emoji: '🎃', cost: 45, sell: 125, days: 5, xp: 40, minLevel: 100, seasons: [2],       rarity: 'premium' },
+  pumpkin:     { id: 'pumpkin',     name: '南瓜',     emoji: '🎃', cost: 45,  sell: 125, days: 5, xp: 40,  minLevel: 100, seasons: [2],    rarity: 'premium'  },
+  // ── 傳奇 ──────────────────────────────────
+  tulip:       { id: 'tulip',       name: '仙鬱金香', emoji: '🌷', cost: 60,  sell: 168, days: 4, xp: 55,  minLevel: 110, seasons: [0],    rarity: 'legendary' },
+  mango:       { id: 'mango',       name: '神芒',     emoji: '🥭', cost: 75,  sell: 210, days: 5, xp: 70,  minLevel: 130, seasons: [1],    rarity: 'legendary' },
+  lotus:       { id: 'lotus',       name: '靈蓮',     emoji: '🪷', cost: 90,  sell: 252, days: 5, xp: 85,  minLevel: 150, seasons: [0, 1], rarity: 'legendary' },
+  pineapple:   { id: 'pineapple',   name: '龍息果',   emoji: '🍍', cost: 110, sell: 308, days: 6, xp: 105, minLevel: 175, seasons: [1],    rarity: 'legendary' },
+  rose:        { id: 'rose',        name: '帝王薔薇', emoji: '🌹', cost: 135, sell: 378, days: 7, xp: 130, minLevel: 200, seasons: [0],    rarity: 'legendary' },
 };
 
 const PET_TYPES = [
