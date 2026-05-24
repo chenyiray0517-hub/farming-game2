@@ -90,16 +90,16 @@ const PET_EGGS = [
     name: '稀有蛋', emoji: '🥚', cls: 'egg-rare',
     cost: 6000,
     grades:  ['good', 'premium', 'legendary'],
-    weights: [55, 35, 10],
-    desc: '優良 55%・高級 35%・傳奇 10%',
+    weights: [64, 35, 1],
+    desc: '優良 64%・高級 35%・傳奇 1%',
   },
   {
     id: 'egg_special',
     name: '特殊蛋', emoji: '🥚', cls: 'egg-special',
     cost: 15000,
     grades:  ['premium', 'legendary', 'mythical'],
-    weights: [50, 35, 15],
-    desc: '高級 50%・傳奇 35%・神話 15%',
+    weights: [94, 5, 1],
+    desc: '高級 94%・傳奇 5%・神話 1%',
   },
 ];
 
