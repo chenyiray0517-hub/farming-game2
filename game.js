@@ -211,8 +211,9 @@ const DEFAULT_STATE = () => ({
   petLevels:        {},
   ownedPets:        [],
   activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false },
-  feedInventory: {},
-  petFeedBoosts: {},
+  feedInventory:  {},
+  petFeedBoosts:  {},
+  petFeedCounts:  {},
 });
 
 let G = DEFAULT_STATE();
@@ -265,6 +266,7 @@ function load() {
   G.viewingOwnedId = null;
   if (!G.feedInventory) G.feedInventory = {};
   if (!G.petFeedBoosts) G.petFeedBoosts = {};
+  if (!G.petFeedCounts) G.petFeedCounts = {};
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -1285,19 +1287,21 @@ function showFeedUseModal(feedId) {
   const petList = owned.map(petId => {
     const pt = PET_TYPES.find(p => p.id === petId);
     if (!pt) return '';
-    const lv  = getPetLevel(petId);
-    const cur = ((G.petFeedBoosts || {})[petId] || {})[feed.buffType] || 0;
-    const curLabel = cur > 0
-      ? `(已加強 ${feed.buffType === 'extraGrowth' ? '+' + cur.toFixed(1) + '天/日' : '+' + Math.round(cur * 100) + '%'})`
-      : '';
+    const lv      = getPetLevel(petId);
+    const used    = ((G.petFeedCounts || {})[petId] || {})[feed.buffType] || 0;
+    const isFull  = used >= 3;
+    const cur     = ((G.petFeedBoosts || {})[petId] || {})[feed.buffType] || 0;
+    const curLabel = used > 0
+      ? `${used}/3 次（${feed.buffType === 'extraGrowth' ? '+' + cur.toFixed(1) + '天/日' : '+' + Math.round(cur * 100) + '%'}）`
+      : '0/3 次';
     return `
-      <div class="fum-pet">
+      <div class="fum-pet${isFull ? ' fum-pet-full' : ''}">
         <span class="fum-pet-emoji">${pt.emoji}</span>
         <div class="fum-pet-info">
           <div class="fum-pet-name">${pt.name} Lv.${lv}</div>
-          ${curLabel ? `<div class="fum-pet-boost">${curLabel}</div>` : ''}
+          <div class="fum-pet-boost">${curLabel}</div>
         </div>
-        <button class="fum-apply-btn" data-petid="${petId}">套用</button>
+        <button class="fum-apply-btn" data-petid="${petId}" ${isFull ? 'disabled' : ''}>${isFull ? '已滿' : '套用'}</button>
       </div>`;
   }).join('');
 
@@ -1323,15 +1327,24 @@ function applyFeedToPet(feedId, petId) {
   const pt   = PET_TYPES.find(p => p.id === petId);
   if (!feed || !pt || !(G.feedInventory[feedId] > 0)) return;
 
+  if (!G.petFeedCounts[petId]) G.petFeedCounts[petId] = {};
+  const used = G.petFeedCounts[petId][feed.buffType] || 0;
+  if (used >= 3) {
+    SFX.error();
+    showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 已達上限（3次）！`, 2500);
+    return;
+  }
+
   G.feedInventory[feedId]--;
   if (G.feedInventory[feedId] <= 0) delete G.feedInventory[feedId];
 
   if (!G.petFeedBoosts[petId]) G.petFeedBoosts[petId] = {};
-  G.petFeedBoosts[petId][feed.buffType] = (G.petFeedBoosts[petId][feed.buffType] || 0) + feed.boost;
+  G.petFeedBoosts[petId][feed.buffType]  = (G.petFeedBoosts[petId][feed.buffType] || 0) + feed.boost;
+  G.petFeedCounts[petId][feed.buffType]  = used + 1;
 
   reapplyBuffs();
   SFX.feedPet();
-  showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 技能提升了！`, 2500);
+  showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 技能提升！（${used + 1}/3）`, 2500);
   save();
   renderAll();
 }

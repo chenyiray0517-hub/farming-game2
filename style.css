@@ -954,6 +954,13 @@ body.harvest-mode  * { cursor: none !important; }
   transition: filter 0.13s;
 }
 .fum-apply-btn:hover { filter: brightness(1.1); }
+.fum-apply-btn:disabled {
+  background: #ddd;
+  color: #aaa;
+  cursor: not-allowed;
+  filter: none;
+}
+.fum-pet-full { opacity: 0.6; }
 
 .fum-cancel {
   padding: 7px 22px;
