@@ -610,6 +610,27 @@ body.harvest-mode  * { cursor: none !important; }
 .pet-card.feeding   { border-color: var(--gold); }
 .pet-card.fed-done  { opacity: 0.72; }
 
+.pet-card:not(.feeding).grade-common    { border-color: #bdbdbd; }
+.pet-card:not(.feeding).grade-good      { border-color: #66bb6a; }
+.pet-card:not(.feeding).grade-premium   { border-color: #42a5f5; }
+.pet-card:not(.feeding).grade-legendary { border-color: #ab47bc; }
+.pet-card:not(.feeding).grade-mythical  { border-color: #ff7043; }
+
+.owned-pet-card.grade-common    { border-color: #bdbdbd; }
+.owned-pet-card.grade-good      { border-color: #66bb6a; }
+.owned-pet-card.grade-premium   { border-color: #42a5f5; }
+.owned-pet-card.grade-legendary { border-color: #ab47bc; }
+.owned-pet-card.grade-mythical  { border-color: #ff7043; }
+
+.pet-grade-badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 10px;
+}
+
 .pet-emoji-big { font-size: 62px; display: block; line-height: 1.1; margin-bottom: 6px; }
 .pet-name      { font-size: 17px; font-weight: 700; margin-bottom: 3px; color: #2c3e50; }
 .pet-fav-food  { font-size: 12px; color: #999; margin-bottom: 4px; }
@@ -630,6 +651,17 @@ body.harvest-mode  * { cursor: none !important; }
   border-color: var(--gold);
   color: var(--gold-dark);
 }
+.pet-buff2-tag {
+  background: #eef4ff;
+  border-color: #90bef5;
+  color: #1565c0;
+}
+.pet-buff2-tag.active {
+  background: rgba(21,101,192,0.12);
+  border-color: #42a5f5;
+  color: #1565c0;
+}
+.pet-stat-buff2 { color: #1565c0; }
 .pet-mood      { font-size: 26px; display: block; margin-bottom: 12px; }
 
 .pet-feed-btn {

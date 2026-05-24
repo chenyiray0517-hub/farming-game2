@@ -24,21 +24,30 @@ const CROPS = {
 };
 
 const PET_TYPES = [
-  { id: 'cat',      name: '小貓',   emoji: '🐱', favCrop: 'strawberry',  xpBase: 15, buff: { type: 'xpBonus',      value: 0.3,  icon: '⭐', label: '採收 XP +30%'     } },
-  { id: 'dog',      name: '小狗',   emoji: '🐶', favCrop: 'carrot',      xpBase: 15, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
-  { id: 'rabbit',   name: '小兔',   emoji: '🐰', favCrop: 'radish',      xpBase: 15, buff: { type: 'shopDiscount', value: 0.15, icon: '🛒', label: '種子費用 -15%'    } },
-  { id: 'fox',      name: '小狐',   emoji: '🦊', favCrop: 'corn',        xpBase: 20, buff: { type: 'sellBonus',    value: 0.25, icon: '💰', label: '販售收益 +25%'    } },
-  { id: 'bear',     name: '小熊',   emoji: '🐻', favCrop: 'pumpkin',     xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
-  { id: 'panda',    name: '熊貓',   emoji: '🐼', favCrop: 'cauliflower', xpBase: 20, buff: { type: 'xpBonus',      value: 0.5,  icon: '⭐', label: '採收 XP +50%'     } },
-  { id: 'deer',     name: '小鹿',   emoji: '🦌', favCrop: 'corn',        xpBase: 20, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
-  { id: 'chick',    name: '小雞',   emoji: '🐤', favCrop: 'cauliflower', xpBase: 10, buff: { type: 'shopDiscount', value: 0.1,  icon: '🛒', label: '種子費用 -10%'    } },
-  { id: 'duck',     name: '小鴨',   emoji: '🦆', favCrop: 'radish',      xpBase: 10, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
-  { id: 'frog',     name: '青蛙',   emoji: '🐸', favCrop: 'cucumber',    xpBase: 15, buff: { type: 'sellBonus',    value: 0.15, icon: '💰', label: '販售收益 +15%'    } },
-  { id: 'owl',      name: '貓頭鷹', emoji: '🦉', favCrop: 'onion',       xpBase: 20, buff: { type: 'xpBonus',      value: 0.4,  icon: '⭐', label: '採收 XP +40%'     } },
-  { id: 'hedgehog', name: '刺蝟',   emoji: '🦔', favCrop: 'strawberry',  xpBase: 20, buff: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
-  { id: 'squirrel', name: '松鼠',   emoji: '🐿️', favCrop: 'corn',        xpBase: 15, buff: { type: 'shopDiscount', value: 0.2,  icon: '🛒', label: '種子費用 -20%'    } },
-  { id: 'koala',    name: '無尾熊', emoji: '🐨', favCrop: 'cucumber',    xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '植物不會缺水枯死' } },
-  { id: 'tiger',    name: '小虎',   emoji: '🐯', favCrop: 'tomato',      xpBase: 30, buff: { type: 'sellBonus',    value: 0.35, icon: '💰', label: '販售收益 +35%'    } },
+  // ── 普通 ────────────────────────────────────────────────────────────────────
+  { id: 'chick',    name: '小雞',   emoji: '🐤', grade: 'common',  favCrop: 'cauliflower', xpBase: 10, buff: { type: 'shopDiscount', value: 0.1,  icon: '🛒', label: '種子費用 -10%'    } },
+  { id: 'duck',     name: '小鴨',   emoji: '🦆', grade: 'common',  favCrop: 'radish',      xpBase: 10, buff: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
+  { id: 'frog',     name: '青蛙',   emoji: '🐸', grade: 'common',  favCrop: 'cucumber',    xpBase: 15, buff: { type: 'sellBonus',    value: 0.15, icon: '💰', label: '販售收益 +15%'    } },
+  { id: 'cat',      name: '小貓',   emoji: '🐱', grade: 'common',  favCrop: 'strawberry',  xpBase: 15, buff: { type: 'xpBonus',      value: 0.3,  icon: '⭐', label: '採收 XP +30%'     } },
+  { id: 'mouse',    name: '小鼠',   emoji: '🐭', grade: 'common',  favCrop: 'potato',      xpBase: 12, buff: { type: 'shopDiscount', value: 0.08, icon: '🛒', label: '種子費用 -8%'     } },
+  { id: 'bee',      name: '蜜蜂',   emoji: '🐝', grade: 'common',  favCrop: 'bellpepper',  xpBase: 12, buff: { type: 'sellBonus',    value: 0.12, icon: '💰', label: '販售收益 +12%'    } },
+  // ── 優良 ────────────────────────────────────────────────────────────────────
+  { id: 'rabbit',   name: '小兔',   emoji: '🐰', grade: 'good',    favCrop: 'radish',      xpBase: 15, buff: { type: 'shopDiscount', value: 0.15, icon: '🛒', label: '種子費用 -15%'    } },
+  { id: 'dog',      name: '小狗',   emoji: '🐶', grade: 'good',    favCrop: 'carrot',      xpBase: 15, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'squirrel', name: '松鼠',   emoji: '🐿️', grade: 'good',    favCrop: 'corn',        xpBase: 15, buff: { type: 'shopDiscount', value: 0.2,  icon: '🛒', label: '種子費用 -20%'    } },
+  { id: 'fox',      name: '小狐',   emoji: '🦊', grade: 'good',    favCrop: 'corn',        xpBase: 20, buff: { type: 'sellBonus',    value: 0.25, icon: '💰', label: '販售收益 +25%'    } },
+  { id: 'deer',     name: '小鹿',   emoji: '🦌', grade: 'good',    favCrop: 'corn',        xpBase: 20, buff: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'hedgehog', name: '刺蝟',   emoji: '🦔', grade: 'good',    favCrop: 'strawberry',  xpBase: 20, buff: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
+  { id: 'otter',    name: '水獺',   emoji: '🦦', grade: 'good',    favCrop: 'mushroom',    xpBase: 18, buff: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
+  { id: 'swan',     name: '天鵝',   emoji: '🦢', grade: 'good',    favCrop: 'grape',       xpBase: 18, buff: { type: 'xpBonus',      value: 0.35, icon: '⭐', label: '採收 XP +35%'     } },
+  // ── 高級 ────────────────────────────────────────────────────────────────────
+  { id: 'owl',      name: '貓頭鷹', emoji: '🦉', grade: 'premium', favCrop: 'onion',       xpBase: 20, buff: { type: 'xpBonus',      value: 0.4,  icon: '⭐', label: '採收 XP +40%'     }, buff2: { type: 'shopDiscount', value: 0.15, icon: '🛒', label: '種子費用 -15%'    } },
+  { id: 'panda',    name: '熊貓',   emoji: '🐼', grade: 'premium', favCrop: 'cauliflower', xpBase: 20, buff: { type: 'xpBonus',      value: 0.5,  icon: '⭐', label: '採收 XP +50%'     }, buff2: { type: 'sellBonus',    value: 0.15, icon: '💰', label: '販售收益 +15%'    } },
+  { id: 'bear',     name: '小熊',   emoji: '🐻', grade: 'premium', favCrop: 'pumpkin',     xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' }, buff2: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
+  { id: 'koala',    name: '無尾熊', emoji: '🐨', grade: 'premium', favCrop: 'cucumber',    xpBase: 25, buff: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' }, buff2: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'tiger',    name: '小虎',   emoji: '🐯', grade: 'premium', favCrop: 'tomato',      xpBase: 30, buff: { type: 'sellBonus',    value: 0.35, icon: '💰', label: '販售收益 +35%'    }, buff2: { type: 'xpBonus',      value: 0.2,  icon: '⭐', label: '採收 XP +20%'     } },
+  { id: 'lion',     name: '小獅',   emoji: '🦁', grade: 'premium', favCrop: 'watermelon',  xpBase: 28, buff: { type: 'sellBonus',    value: 0.3,  icon: '💰', label: '販售收益 +30%'    }, buff2: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  { id: 'dragon',   name: '小龍',   emoji: '🐉', grade: 'premium', favCrop: 'eggplant',    xpBase: 30, buff: { type: 'xpBonus',      value: 0.45, icon: '⭐', label: '採收 XP +45%'     }, buff2: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
 ];
 
 const SEASONS       = ['春', '夏', '秋', '冬'];
@@ -147,7 +156,7 @@ function toggleMute() {
 // ══════════════════════════════════════════
 
 function makePlot() {
-  return { state: 'empty', cropId: null, daysLeft: 0, totalDays: 0, watered: false };
+  return { state: 'empty', cropId: null, daysLeft: 0, totalDays: 0, watered: false, dryDays: 0 };
 }
 
 const DEFAULT_STATE = () => ({
@@ -217,7 +226,10 @@ function load() {
     const raw = localStorage.getItem('farmGame_v2');
     if (raw) {
       G = Object.assign(DEFAULT_STATE(), JSON.parse(raw));
-      G.grid.forEach(p => { if (p.watered === undefined) p.watered = false; });
+      G.grid.forEach(p => {
+        if (p.watered  === undefined) p.watered  = false;
+        if (p.dryDays  === undefined) p.dryDays  = 0;
+      });
     }
   } catch(_) { G = DEFAULT_STATE(); }
   G.feedingPetIdx  = -1; // always reset transient state
@@ -291,7 +303,7 @@ function renderBuffStrip() {
   if (b.sellBonus    > 0)   chips.push(`💰 販售 +${Math.round(b.sellBonus * 100)}%`);
   if (b.shopDiscount > 0)   chips.push(`🛒 種子 -${Math.round(b.shopDiscount * 100)}%`);
   if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth}天/日`);
-  if (b.noWither)           chips.push(`💧 植物不會枯死`);
+  if (b.noWither)           chips.push(`💧 1天不澆水可緩衝`);
   strip.innerHTML = chips.length
     ? chips.map(t => `<span class="buff-chip">${t}</span>`).join('')
     : '';
@@ -505,6 +517,7 @@ function plantSeed(idx) {
   plot.daysLeft  = crop.days;
   plot.totalDays = crop.days;
   plot.watered   = true; // freshly planted = already watered today
+  plot.dryDays   = 0;
 
   checkTasks();
   save();
@@ -656,11 +669,32 @@ function endDay() {
   G.grid.forEach(plot => {
     if (plot.state !== 'growing') return;
 
-    if (!plot.watered && !rainDay && !G.activeBuffs.noWither) {
-      plot.state   = 'withered';
-      plot.watered = false;
-      witheredCount++;
+    const isDry = !plot.watered && !rainDay;
+    if (isDry) {
+      if (G.activeBuffs.noWither && plot.dryDays === 0) {
+        // Grace day: first day without water, survive but mark the streak
+        plot.dryDays = 1;
+        plot.daysLeft -= 1 + WEATHERS[G.weather].bonus + G.activeBuffs.extraGrowth;
+        plot.watered   = false;
+        if (plot.daysLeft <= 0) {
+          plot.daysLeft = 0;
+          plot.state    = 'ready';
+        } else {
+          const crop = CROPS[plot.cropId];
+          if (!crop.seasons.includes(G.season) && Math.random() < 0.25) {
+            plot.state = 'withered';
+            outOfSeasonCount++;
+          }
+        }
+      } else {
+        // No buff, or second consecutive dry day → wither
+        plot.state   = 'withered';
+        plot.dryDays = 0;
+        witheredCount++;
+      }
     } else {
+      // Watered or rained → normal growth, reset dry streak
+      plot.dryDays   = 0;
       plot.daysLeft -= 1 + WEATHERS[G.weather].bonus + G.activeBuffs.extraGrowth;
       plot.watered   = false;
       if (plot.daysLeft <= 0) {
@@ -762,7 +796,7 @@ function formatBuffLabel(buff, value) {
     case 'sellBonus':    return `販售收益 +${Math.round(value * 100)}%`;
     case 'shopDiscount': return `種子費用 -${Math.round(value * 100)}%`;
     case 'extraGrowth':  return `每天多成長 ${value.toFixed(1)} 天`;
-    case 'noWither':     return `植物不會缺水枯死`;
+    case 'noWither':     return `1天不澆水不會枯死`;
     default:             return buff.label;
   }
 }
@@ -785,13 +819,16 @@ function reapplyBuffs() {
     if (!pet.fed) return;
     counted.add(pet.id);
     applyPetBuff(pet.id, pet.buff);
+    if (pet.buff2) applyPetBuff(pet.id, pet.buff2);
   });
 
   // Owned pets always provide passive buff (skip if already counted above)
   (G.ownedPets || []).forEach(petId => {
     if (counted.has(petId)) return;
     const pt = PET_TYPES.find(p => p.id === petId);
-    if (pt) applyPetBuff(petId, pt.buff);
+    if (!pt) return;
+    applyPetBuff(petId, pt.buff);
+    if (pt.buff2) applyPetBuff(petId, pt.buff2);
   });
 }
 
@@ -882,6 +919,7 @@ function renderPetScreen() {
         const isMax    = lv >= 5;
         const eff      = scaledBuffValue(pet.buff, lv);
         const effLabel = formatBuffLabel(pet.buff, eff);
+        const eff2Label = pet.buff2 ? formatBuffLabel(pet.buff2, scaledBuffValue(pet.buff2, lv)) : null;
         const cost     = upgradeCost(lv);
         const isOwned  = (G.ownedPets || []).includes(pet.id);
         feedContent = `
@@ -889,6 +927,7 @@ function renderPetScreen() {
           <div class="pet-stat-panel">
             <div class="pet-stat-lv">⭐ Lv.${lv}</div>
             <div class="pet-stat-buff">${pet.buff.icon} ${effLabel}</div>
+            ${eff2Label ? `<div class="pet-stat-buff pet-stat-buff2">${pet.buff2.icon} ${eff2Label}</div>` : ''}
             ${isMax
               ? `<div class="pet-stat-maxlv">✨ 已達最高等級</div>`
               : `<div class="pet-stat-cost">升級費用：${cost} 💰</div>
@@ -924,13 +963,17 @@ function renderPetScreen() {
       feedContent = `<button class="pet-feed-btn" data-act="open" data-pet="${idx}">🌾 餵食</button>`;
     }
 
+    const petGrade  = pet.grade || 'common';
+    const gradeInfo = RARITIES[petGrade];
     const card = document.createElement('div');
-    card.className = 'pet-card' + (isFeedMode ? ' feeding' : '') + (pet.fed ? ' fed-done' : '');
+    card.className = 'pet-card grade-' + petGrade + (isFeedMode ? ' feeding' : '') + (pet.fed ? ' fed-done' : '');
     card.innerHTML = `
+      <span class="rarity-badge pet-grade-badge" style="color:${gradeInfo.badgeColor};background:${gradeInfo.badgeBg}">${gradeInfo.name}</span>
       <span class="pet-emoji-big">${pet.emoji}</span>
       <div class="pet-name">${pet.name}</div>
       <div class="pet-fav-food">喜歡：${favCrop ? favCrop.emoji + ' ' + favCrop.name : '?'}</div>
       <div class="pet-buff-tag${pet.fed ? ' active' : ''}">${pet.buff.icon} ${pet.buff.label}</div>
+      ${pet.buff2 ? `<div class="pet-buff-tag pet-buff2-tag${pet.fed ? ' active' : ''}">${pet.buff2.icon} ${pet.buff2.label}</div>` : ''}
       <span class="pet-mood">${moodEmoji}</span>
       ${feedContent}`;
     list.appendChild(card);
@@ -967,9 +1010,12 @@ function renderOwnedPets() {
   list.innerHTML = owned.map(petId => {
     const pt      = PET_TYPES.find(p => p.id === petId);
     if (!pt) return '';
-    const lv      = getPetLevel(petId);
-    const viewing = G.viewingOwnedId === petId;
-    return `<div class="owned-pet-card${viewing ? ' viewing' : ''}" data-petid="${petId}">
+    const lv        = getPetLevel(petId);
+    const viewing   = G.viewingOwnedId === petId;
+    const og        = pt.grade || 'common';
+    const ogInfo    = RARITIES[og];
+    return `<div class="owned-pet-card grade-${og}${viewing ? ' viewing' : ''}" data-petid="${petId}">
+      <span class="rarity-badge pet-grade-badge" style="color:${ogInfo.badgeColor};background:${ogInfo.badgeBg}">${ogInfo.name}</span>
       <span class="owned-pet-emoji">${pt.emoji}</span>
       <div class="owned-pet-name">${pt.name}</div>
       <div class="owned-pet-lv">⭐ Lv.${lv}</div>
@@ -991,14 +1037,18 @@ function renderOwnedPets() {
     const isMax    = lv >= 5;
     const eff      = scaledBuffValue(pt.buff, lv);
     const effLabel = formatBuffLabel(pt.buff, eff);
+    const eff2Label = pt.buff2 ? formatBuffLabel(pt.buff2, scaledBuffValue(pt.buff2, lv)) : null;
     const cost     = upgradeCost(lv);
+    const dg     = pt.grade || 'common';
+    const dgInfo = RARITIES[dg];
     detail.innerHTML = `
       <div class="owned-detail-inner">
         <span class="owned-detail-emoji">${pt.emoji}</span>
         <div class="owned-detail-info">
-          <div class="owned-detail-name">${pt.name}</div>
+          <div class="owned-detail-name">${pt.name} <span class="rarity-badge pet-grade-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span></div>
           <div class="owned-detail-lv">⭐ Lv.${lv}</div>
           <div class="owned-detail-buff">${pt.buff.icon} ${effLabel}</div>
+          ${eff2Label ? `<div class="owned-detail-buff">${pt.buff2.icon} ${eff2Label}</div>` : ''}
         </div>
         <div class="owned-detail-actions">
           ${isMax
