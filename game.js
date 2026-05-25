@@ -609,7 +609,7 @@ function renderGrid() {
 
       const dTag = document.createElement('span');
       dTag.className = 'days-tag';
-      dTag.textContent = Math.round(plot.daysLeft) + '天';
+      dTag.textContent = Math.max(1, Math.round(plot.daysLeft)) + '天';
       cell.appendChild(dTag);
 
     } else if (plot.state === 'ready') {
