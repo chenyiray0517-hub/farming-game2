@@ -498,9 +498,10 @@ body.harvest-mode  * { cursor: none !important; }
   color: #fff;
 }
 
-/* ── Pet / Petshop Buttons ── */
+/* ── Pet / Petshop / Enchant Buttons ── */
 #pet-btn,
-#petshop-btn {
+#petshop-btn,
+#enchant-btn {
   position: fixed;
   right: 18px;
   width: 50px;
