@@ -1506,7 +1506,7 @@ function renderPetShop(el) {
   }
 
   html += '<div class="task-section-title" style="margin-top:14px">🥚 寵物蛋</div>';
-  html += '<div class="egg-feed-hint">🍖 開蛋後需花費金幣請商人餵養，才能收留寵物</div>';
+  html += '<div class="egg-feed-hint">🌾 開蛋後可自己餵食農作物，或花費金幣請商人代勞，才能收留寵物</div>';
   PET_EGGS.forEach(egg => {
     html += `
       <div class="egg-shop-card ${egg.cls}">
@@ -1667,8 +1667,9 @@ function showEggResultModal(pet, grade, mythicalFallback) {
   modal.id = 'egg-result-modal';
   document.body.appendChild(modal);
 
-  let fed = false;
-  let firstRender = true;
+  let fed          = false;
+  let selfFeedMode = false;
+  let firstRender  = true;
 
   function render() {
     const rarity   = RARITIES[grade];
@@ -1699,13 +1700,36 @@ function showEggResultModal(pet, grade, mythicalFallback) {
             : '<button class="erm-adopt" id="erm-adopt">🏠 收留牠！</button>'}
           <button class="erm-release" id="erm-release">🌿 放生</button>
         </div>`;
+    } else if (selfFeedMode) {
+      const allItems = Object.entries(G.inventory);
+      const eligible = pet.foodRarities
+        ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+        : allItems.filter(([, cnt]) => cnt >= 10);
+      if (!eligible.length) {
+        const hint = pet.foodRarities ? '沒有足夠的傳奇或神話農作物' : '背包中沒有足夠的農作物';
+        adoptArea = `
+          <div class="erm-feed-note">${hint}<br><small>每次餵食需要 10 個相同作物</small></div>
+          <div class="erm-actions"><button class="erm-dismiss" id="erm-self-cancel">返回</button></div>`;
+      } else {
+        const chips = eligible.map(([cid, cnt]) => {
+          const c   = CROPS[cid];
+          const fav = cid === pet.favCrop;
+          return `<button class="food-chip${fav ? ' fav-chip' : ''}" data-crop="${cid}">${c.emoji} ${c.name} ×${cnt}${fav ? ' ★' : ''}</button>`;
+        }).join('');
+        adoptArea = `
+          <div class="food-select-title">選擇要餵的食物（消耗 10 個）</div>
+          ${pet.foodRarities ? '<div class="erm-feed-note" style="font-size:11px;margin:2px 0 4px">只吃傳奇 / 神話作物</div>' : ''}
+          <div class="food-grid" id="erm-food-grid">${chips}</div>
+          <div class="erm-actions"><button class="erm-dismiss" id="erm-self-cancel">取消</button></div>`;
+      }
     } else {
       adoptArea = `
         <div class="erm-feed-note">需要先餵養才能收留</div>
-        <div class="erm-actions">
-          ${isFull
-            ? '<div class="erm-full-note">農場已滿（5/5）</div>'
-            : `<button class="erm-feed-btn" id="erm-feed">🍖 花費 ${feedCost.toLocaleString()} 💰 餵養</button>`}
+        <div class="erm-feed-choices">
+          <button class="erm-self-feed-btn" id="erm-self-feed">🌾 自己餵養</button>
+          ${isFull ? '' : `<button class="erm-feed-btn" id="erm-feed">🍖 商人 ${feedCost.toLocaleString()}💰</button>`}
+        </div>
+        <div class="erm-actions" style="margin-top:8px">
           <button class="erm-release" id="erm-release">🌿 放生</button>
         </div>`;
     }
@@ -1724,14 +1748,29 @@ function showEggResultModal(pet, grade, mythicalFallback) {
       </div>`;
     firstRender = false;
 
+    modal.querySelector('#erm-self-feed')?.addEventListener('click', () => { selfFeedMode = true; render(); });
+    modal.querySelector('#erm-self-cancel')?.addEventListener('click', () => { selfFeedMode = false; render(); });
+
+    modal.querySelectorAll('#erm-food-grid .food-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const cropId = chip.dataset.crop;
+        if (!G.inventory[cropId] || G.inventory[cropId] < 10) { showToast('需要 10 個相同作物！'); return; }
+        G.inventory[cropId] -= 10;
+        if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
+        fed = true; selfFeedMode = false;
+        SFX.feedPet();
+        const isFav = cropId === pet.favCrop;
+        showToast(isFav ? `${pet.emoji} ${pet.name} 最喜歡吃這個！` : `${pet.emoji} ${pet.name} 吃得很開心！`, 2500);
+        save(); renderAll(); render();
+      });
+    });
+
     modal.querySelector('#erm-feed')?.addEventListener('click', () => {
       if (G.money < feedCost) { SFX.error(); showToast('💰 金幣不足，無法餵養！'); return; }
       G.money -= feedCost;
       fed = true;
       SFX.eggFeed();
-      save();
-      renderAll();
-      render();
+      save(); renderAll(); render();
     });
 
     modal.querySelector('#erm-adopt')?.addEventListener('click', () => {
@@ -1741,9 +1780,7 @@ function showEggResultModal(pet, grade, mythicalFallback) {
       reapplyBuffs();
       SFX.adopt();
       showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 3000);
-      save();
-      renderAll();
-      modal.remove();
+      save(); renderAll(); modal.remove();
     });
 
     modal.querySelector('#erm-release')?.addEventListener('click', () => {
@@ -1766,27 +1803,26 @@ function showEggMultiResultModal(results) {
   const fedSet      = new Set();
   const adoptedSet  = new Set();
   const releasedSet = new Set();
+  let   selfFeedIdx = -1;
 
   function render() {
     const adoptedCount = adoptedSet.size;
     const slotsLeft    = Math.max(0, 5 - (G.ownedPets || []).length - adoptedCount);
 
     const cardsHtml = results.map(({ pet, grade, mythicalFallback }, i) => {
-      const rarity   = RARITIES[grade];
-      const isOwned  = (G.ownedPets || []).includes(pet.id);
-      const isAdopted = adoptedSet.has(i);
+      const rarity     = RARITIES[grade];
+      const isOwned    = (G.ownedPets || []).includes(pet.id);
+      const isAdopted  = adoptedSet.has(i);
       const isReleased = releasedSet.has(i);
-      const isFed    = fedSet.has(i);
-      const feedCost = EGG_FEED_COST[grade];
+      const isFed      = fedSet.has(i);
+      const feedCost   = EGG_FEED_COST[grade];
 
       const buffLines = [pet.buff, pet.buff2, pet.buff3]
         .filter(Boolean)
         .map(b => `<span class="emr-buff-tag">${b.icon} ${b.label}</span>`)
         .join('');
 
-      const mythBadge = mythicalFallback
-        ? '<span class="emr-myth-note">傳奇替代</span>'
-        : '';
+      const mythBadge = mythicalFallback ? '<span class="emr-myth-note">傳奇替代</span>' : '';
 
       let actionHtml;
       if (isOwned || isAdopted) {
@@ -1797,8 +1833,29 @@ function showEggMultiResultModal(results) {
         actionHtml = slotsLeft <= 0
           ? `<div class="emr-status-tag full">農場已滿</div>`
           : `<button class="emr-adopt-btn" data-idx="${i}">🏠 收留</button>`;
+      } else if (selfFeedIdx === i) {
+        const allItems = Object.entries(G.inventory);
+        const eligible = pet.foodRarities
+          ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+          : allItems.filter(([, cnt]) => cnt >= 10);
+        if (!eligible.length) {
+          actionHtml = `
+            <div class="emr-pick-title" style="color:#e53935">作物不足</div>
+            <button class="emr-skip-btn" data-selfcancel="${i}">取消</button>`;
+        } else {
+          const chips = eligible.map(([cid, cnt]) => {
+            const c = CROPS[cid];
+            const fav = cid === pet.favCrop;
+            return `<button class="emr-pick-chip${fav ? ' fav' : ''}" data-idx="${i}" data-crop="${cid}">${c.emoji}×${cnt}${fav ? '★' : ''}</button>`;
+          }).join('');
+          actionHtml = `
+            <div class="emr-pick-title">×10</div>
+            <div class="emr-pick-chips">${chips}</div>
+            <button class="emr-skip-btn" data-selfcancel="${i}">取消</button>`;
+        }
       } else {
         actionHtml = `
+          <button class="emr-self-feed-btn" data-idx="${i}">🌾 自己餵</button>
           <button class="emr-feed-btn" data-idx="${i}">🍖 ${feedCost.toLocaleString()}💰</button>
           <button class="emr-skip-btn" data-idx="${i}">🌿 放生</button>`;
       }
@@ -1827,17 +1884,36 @@ function showEggMultiResultModal(results) {
         </div>
       </div>`;
 
+    modal.querySelectorAll('.emr-self-feed-btn').forEach(btn => {
+      btn.addEventListener('click', () => { selfFeedIdx = parseInt(btn.dataset.idx); render(); });
+    });
+
+    modal.querySelectorAll('.emr-pick-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const idx    = parseInt(chip.dataset.idx);
+        const cropId = chip.dataset.crop;
+        if (!G.inventory[cropId] || G.inventory[cropId] < 10) { showToast('需要 10 個相同作物！'); return; }
+        G.inventory[cropId] -= 10;
+        if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
+        fedSet.add(idx); selfFeedIdx = -1;
+        SFX.feedPet();
+        save(); renderAll(); render();
+      });
+    });
+
+    modal.querySelectorAll('[data-selfcancel]').forEach(btn => {
+      btn.addEventListener('click', () => { selfFeedIdx = -1; render(); });
+    });
+
     modal.querySelectorAll('.emr-feed-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.idx);
+        const idx  = parseInt(btn.dataset.idx);
         const cost = EGG_FEED_COST[results[idx].grade];
         if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
         G.money -= cost;
         fedSet.add(idx);
         SFX.eggFeed();
-        save();
-        renderAll();
-        render();
+        save(); renderAll(); render();
       });
     });
 
@@ -1852,17 +1928,13 @@ function showEggMultiResultModal(results) {
         reapplyBuffs();
         SFX.adopt();
         showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 2000);
-        save();
-        renderAll();
-        render();
+        save(); renderAll(); render();
       });
     });
 
     modal.querySelectorAll('.emr-skip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        releasedSet.add(parseInt(btn.dataset.idx));
-        render();
-      });
+      if (btn.dataset.selfcancel !== undefined) return;
+      btn.addEventListener('click', () => { releasedSet.add(parseInt(btn.dataset.idx)); render(); });
     });
 
     modal.querySelector('#emr-close').addEventListener('click', () => modal.remove());
