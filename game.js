@@ -373,7 +373,7 @@ function renderBuffStrip() {
   if (b.xpBonus      > 0)   chips.push(`⭐ 採收 XP +${Math.round(b.xpBonus * 100)}%`);
   if (b.sellBonus    > 0)   chips.push(`💰 販售 +${Math.round(b.sellBonus * 100)}%`);
   if (b.shopDiscount > 0)   chips.push(`🛒 種子 -${Math.round(b.shopDiscount * 100)}%`);
-  if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth}天/日`);
+  if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth.toFixed(1)}天/日`);
   if (b.noWither)           chips.push(`💧 1天不澆水可緩衝`);
   strip.innerHTML = chips.length
     ? chips.map(t => `<span class="buff-chip">${t}</span>`).join('')
@@ -1724,8 +1724,9 @@ function bindEvents() {
 
   document.addEventListener('mouseup', () => { isHolding = false; });
 
-  // Touch planting — press to show seed hints, drag to plant
+  // Touch planting — press to show floating seed, drag to plant
   let lastTouchCellIdx = -1;
+  const touchFollower = document.getElementById('touch-seed-follow');
 
   function touchCellFromPoint(touch) {
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -1739,25 +1740,39 @@ function bindEvents() {
     renderFarm();
   }
 
+  function moveTouchFollower(touch) {
+    touchFollower.style.left = touch.clientX + 'px';
+    touchFollower.style.top  = touch.clientY + 'px';
+  }
+
   function exitTouchPlanting() {
     isTouchPlanting = false;
     farmGrid.classList.remove('touch-planting');
+    touchFollower.style.display = 'none';
     renderFarm();
     lastTouchCellIdx = -1;
   }
 
   farmGrid.addEventListener('touchstart', e => {
     e.preventDefault();
-    const cell = touchCellFromPoint(e.touches[0]);
+    const touch = e.touches[0];
+    const cell = touchCellFromPoint(touch);
     if (!cell) return;
     enterTouchPlanting();
+    if (isTouchPlanting) {
+      touchFollower.textContent = CROPS[G.selectedSeed].emoji;
+      moveTouchFollower(touch);
+      touchFollower.style.display = 'block';
+    }
     lastTouchCellIdx = parseInt(cell.dataset.idx);
     handleCell(lastTouchCellIdx);
   }, { passive: false });
 
   farmGrid.addEventListener('touchmove', e => {
     e.preventDefault();
-    const cell = touchCellFromPoint(e.touches[0]);
+    const touch = e.touches[0];
+    moveTouchFollower(touch);
+    const cell = touchCellFromPoint(touch);
     if (!cell) return;
     const idx = parseInt(cell.dataset.idx);
     if (idx === lastTouchCellIdx) return;
@@ -1765,7 +1780,7 @@ function bindEvents() {
     handleCell(idx);
   }, { passive: false });
 
-  farmGrid.addEventListener('touchend',   exitTouchPlanting);
+  farmGrid.addEventListener('touchend',    exitTouchPlanting);
   farmGrid.addEventListener('touchcancel', exitTouchPlanting);
 
   // Panel tabs
@@ -1773,7 +1788,6 @@ function bindEvents() {
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
     if (btn.dataset.tab === 'end') { endDay(); return; }
-    if (btn.dataset.tab === 'pet') { openPetScreen(); return; }
     G.activeTab = btn.dataset.tab;
     renderPanel();
   });
@@ -1785,6 +1799,7 @@ function bindEvents() {
 
   // Pet screen
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
+  document.getElementById('petshop-btn').addEventListener('click', () => { G.activeTab = 'petshop'; renderPanel(); });
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
 }
