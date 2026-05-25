@@ -2010,15 +2010,19 @@ function bindEvents() {
   farmGrid.addEventListener('touchstart', e => {
     e.preventDefault();
     const touch = e.touches[0];
-    const cell  = touchCellFromPoint(touch);
+    const emoji = G.mode === 'watering'                  ? '🪣'
+                : G.mode === 'harvest'                   ? '🌾'
+                : (G.mode === 'normal' && G.selectedSeed) ? CROPS[G.selectedSeed].emoji
+                : null;
+    if (emoji) {
+      touchFollower.textContent   = emoji;
+      touchFollower.style.left    = touch.clientX + 'px';
+      touchFollower.style.top     = touch.clientY + 'px';
+      touchFollower.style.display = 'block';
+    }
+    const cell = touchCellFromPoint(touch);
     if (!cell) return;
     lastTouchCellIdx = parseInt(cell.dataset.idx);
-    if (G.mode === 'normal' && G.selectedSeed) {
-      touchFollower.textContent    = CROPS[G.selectedSeed].emoji;
-      touchFollower.style.left     = touch.clientX + 'px';
-      touchFollower.style.top      = touch.clientY + 'px';
-      touchFollower.style.display  = 'block';
-    }
     handleCell(lastTouchCellIdx);
   }, { passive: false });
 
