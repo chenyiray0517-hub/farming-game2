@@ -2209,6 +2209,7 @@ function bindEvents() {
   // Pet screen
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
   document.getElementById('petshop-btn').addEventListener('click', () => { G.activeTab = 'petshop'; renderPanel(); });
+  document.getElementById('enchant-btn').addEventListener('click', () => { G.activeTab = 'enchant'; renderPanel(); });
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
 }

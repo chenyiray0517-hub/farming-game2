@@ -516,8 +516,10 @@ body.harvest-mode  * { cursor: none !important; }
 }
 #pet-btn     { bottom: 72px;  background: var(--green-accent); }
 #petshop-btn { bottom: 132px; background: #e09300; }
+#enchant-btn { bottom: 192px; background: #7b1fa2; }
 #pet-btn:hover,
-#petshop-btn:hover { transform: scale(1.12); }
+#petshop-btn:hover,
+#enchant-btn:hover { transform: scale(1.12); }
 
 /* ── Pet Screen ── */
 #pet-screen {
