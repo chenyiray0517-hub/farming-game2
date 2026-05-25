@@ -604,13 +604,29 @@ body.harvest-mode  * { cursor: none !important; }
   50%       { transform: translateX(14px); }
 }
 
+#pet-list-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.35) transparent;
+  padding: 10px 0 18px;
+  z-index: 1;
+}
+
+#pet-list-wrap::-webkit-scrollbar        { height: 5px; }
+#pet-list-wrap::-webkit-scrollbar-track  { background: transparent; }
+#pet-list-wrap::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.35); border-radius: 3px; }
+
 #pet-list {
   display: flex;
   gap: 28px;
   align-items: flex-end;
-  justify-content: center;
-  flex-wrap: wrap;
-  z-index: 1;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  min-width: max-content;
+  padding: 0 28px;
 }
 
 .pet-card {
