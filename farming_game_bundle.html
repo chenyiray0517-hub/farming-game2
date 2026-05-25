@@ -184,6 +184,7 @@ body.harvest-mode  * { cursor: none !important; }
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.25);
 }
 
+
 .plot.growing         { background: #5a9e4a; } /* 綠：未澆水 */
 .plot.growing.watered { background: #4a88c4; } /* 藍：已澆水 */
 
@@ -351,6 +352,7 @@ body.harvest-mode  * { cursor: none !important; }
 
 .seed-prices { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; gap: 1px; }
 .seed-cost { color: #e53935; font-weight: 600; }
+.seed-cost.discounted s { color: #aaa; font-weight: 400; font-size: 0.85em; }
 .seed-sell { color: #43a047; font-weight: 600; }
 .lock-label { font-size: 10px; color: #aaa; }
 
@@ -503,15 +505,15 @@ body.harvest-mode  * { cursor: none !important; }
   color: #fff;
 }
 
-/* ── Pet Button ── */
-#pet-btn {
+/* ── Pet / Petshop / Enchant Buttons ── */
+#pet-btn,
+#petshop-btn,
+#enchant-btn {
   position: fixed;
-  bottom: 72px;
   right: 18px;
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: var(--green-accent);
   border: 3px solid rgba(255,255,255,0.4);
   color: white;
   font-size: 22px;
@@ -520,7 +522,12 @@ body.harvest-mode  * { cursor: none !important; }
   transition: transform 0.15s;
   z-index: 50;
 }
-#pet-btn:hover { transform: scale(1.12); }
+#pet-btn     { bottom: 72px;  background: var(--green-accent); }
+#petshop-btn { bottom: 132px; background: #e09300; }
+#enchant-btn { bottom: 192px; background: #7b1fa2; }
+#pet-btn:hover,
+#petshop-btn:hover,
+#enchant-btn:hover { transform: scale(1.12); }
 
 /* ── Pet Screen ── */
 #pet-screen {
@@ -593,13 +600,29 @@ body.harvest-mode  * { cursor: none !important; }
   50%       { transform: translateX(14px); }
 }
 
+#pet-list-wrap {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.35) transparent;
+  padding: 10px 0 18px;
+  z-index: 1;
+}
+
+#pet-list-wrap::-webkit-scrollbar        { height: 5px; }
+#pet-list-wrap::-webkit-scrollbar-track  { background: transparent; }
+#pet-list-wrap::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.35); border-radius: 3px; }
+
 #pet-list {
   display: flex;
   gap: 28px;
   align-items: flex-end;
-  justify-content: center;
-  flex-wrap: wrap;
-  z-index: 1;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  min-width: max-content;
+  padding: 0 28px;
 }
 
 .pet-card {
@@ -642,6 +665,18 @@ body.harvest-mode  * { cursor: none !important; }
 .pet-name      { font-size: 17px; font-weight: 700; margin-bottom: 3px; color: #2c3e50; }
 .pet-fav-food  { font-size: 12px; color: #999; margin-bottom: 4px; }
 
+.pet-food-restrict {
+  font-size: 11px;
+  color: #6a1b9a;
+  font-weight: 700;
+  background: #f3e5f5;
+  border: 1.5px solid #ab47bc;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
 .pet-buff-tag {
   display: inline-block;
   padding: 3px 10px;
@@ -669,6 +704,17 @@ body.harvest-mode  * { cursor: none !important; }
   color: #1565c0;
 }
 .pet-stat-buff2 { color: #1565c0; }
+.pet-buff3-tag {
+  background: #e0f7fa;
+  border-color: #4dd0e1;
+  color: #006064;
+}
+.pet-buff3-tag.active {
+  background: rgba(0,188,212,0.12);
+  border-color: #00bcd4;
+  color: #006064;
+}
+.pet-stat-buff3 { color: #006064; }
 .pet-mood      { font-size: 26px; display: block; margin-bottom: 12px; }
 
 .pet-feed-btn {
@@ -725,6 +771,469 @@ body.harvest-mode  * { cursor: none !important; }
 .food-cancel-btn:hover { border-color: #bbb; color: #666; }
 .no-food-msg { font-size: 12px; color: #bbb; padding: 8px 0; line-height: 1.6; }
 
+.food-cost-note {
+  font-size: 11px;
+  color: #e65100;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+/* ── Sell Quantity Modal ── */
+#sell-qty-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sqm-box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 24px 28px;
+  min-width: 240px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sqm-title  { font-size: 17px; font-weight: 800; color: #2c3e50; }
+.sqm-stock  { font-size: 12px; color: #999; }
+.sqm-total  { font-size: 16px; font-weight: 700; color: var(--green-accent); }
+
+.sqm-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sqm-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #f4f4f4;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.14s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sqm-btn:hover { background: #e8f5e9; border-color: #4caf50; }
+
+.sqm-qty {
+  font-size: 28px;
+  font-weight: 800;
+  color: #2c3e50;
+  min-width: 40px;
+  text-align: center;
+}
+
+.sqm-all-hint { font-size: 12px; color: #aaa; }
+
+.sqm-max-btn {
+  background: none;
+  border: 1px solid #bbb;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.sqm-max-btn:hover { background: #f4f4f4; border-color: #888; color: #555; }
+
+.sqm-actions { display: flex; gap: 12px; margin-top: 4px; }
+
+.sqm-cancel {
+  padding: 8px 20px;
+  border: 2px solid #ddd;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.14s;
+}
+.sqm-cancel:hover { border-color: #bbb; color: #555; }
+
+.sqm-confirm {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.14s;
+}
+.sqm-confirm:hover { filter: brightness(1.1); }
+
+/* ── Pet Shop (飼料) ── */
+.feed-shop-item,
+.feed-inv-item {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 9px;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+  gap: 8px;
+}
+
+.feed-emoji { font-size: 24px; flex-shrink: 0; }
+
+.feed-info  { flex: 1; }
+.feed-name  { font-weight: 700; font-size: 13px; color: #2c3e50; }
+.feed-desc  { font-size: 11px; color: #888; margin-top: 1px; }
+.feed-cnt   { font-weight: 600; color: var(--green-dark); }
+
+.feed-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.feed-cost  { font-size: 11px; color: #e53935; font-weight: 600; }
+
+.feed-buy-btn {
+  padding: 5px 11px;
+  background: linear-gradient(135deg, var(--gold), #e09300);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition: filter 0.14s;
+}
+.feed-buy-btn:hover { filter: brightness(1.1); }
+
+.feed-use-btn {
+  padding: 5px 11px;
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: background 0.14s;
+}
+.feed-use-btn:hover { background: #388e3c; }
+
+/* ── Feed Use Modal ── */
+#feed-use-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fum-box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px 24px;
+  min-width: 260px;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.fum-title  { font-size: 17px; font-weight: 800; color: #2c3e50; }
+.fum-desc   { font-size: 12px; color: #43a047; font-weight: 600; }
+.fum-label  { font-size: 12px; color: #888; }
+
+.fum-pet-list { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+
+.fum-pet {
+  display: flex;
+  align-items: center;
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 8px 10px;
+  gap: 8px;
+  text-align: left;
+}
+
+.fum-pet-emoji  { font-size: 24px; flex-shrink: 0; }
+.fum-pet-info   { flex: 1; }
+.fum-pet-name   { font-size: 13px; font-weight: 700; color: #2c3e50; }
+.fum-pet-boost  { font-size: 11px; color: #888; margin-top: 1px; }
+
+.fum-apply-btn {
+  padding: 5px 13px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: filter 0.13s;
+}
+.fum-apply-btn:hover { filter: brightness(1.1); }
+.fum-apply-btn:disabled {
+  background: #ddd;
+  color: #aaa;
+  cursor: not-allowed;
+  filter: none;
+}
+.fum-pet-full { opacity: 0.6; }
+
+.fum-cancel {
+  padding: 7px 22px;
+  border: 2px solid #ddd;
+  border-radius: 16px;
+  background: transparent;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.fum-cancel:hover { border-color: #bbb; color: #555; }
+
+/* feed boost label in owned pet detail */
+.owned-feed-boost { color: #e65100 !important; font-size: 11px; }
+
+/* ── Pet Eggs Shop ── */
+.egg-shop-card {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  text-align: center;
+  border: 2.5px solid;
+  transition: transform 0.15s;
+}
+.egg-shop-card:hover { transform: translateY(-2px); }
+
+.egg-common  { border-color: #bdbdbd; background: linear-gradient(135deg, #fafafa, #f0f0f0); }
+.egg-rare    { border-color: #42a5f5; background: linear-gradient(135deg, #e3f2fd, #f0f8ff); }
+.egg-special { border-color: #ab47bc; background: linear-gradient(135deg, #f3e5f5, #fdf5ff); }
+
+.egg-shop-emoji { font-size: 32px; display: block; margin-bottom: 4px; }
+.egg-shop-name  { font-size: 14px; font-weight: 800; color: #2c3e50; }
+.egg-shop-desc  { font-size: 10px; color: #888; margin: 3px 0 6px; line-height: 1.7; }
+.egg-shop-cost  { font-size: 12px; font-weight: 700; color: #e53935; margin-bottom: 7px; }
+
+.egg-feed-hint {
+  font-size: 11px; color: #8d6e63; background: #fdf3e7;
+  border: 1px solid #ffe0b2; border-radius: 8px;
+  padding: 6px 12px; margin-bottom: 10px; text-align: center;
+}
+
+.egg-btn-group {
+  display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+
+.egg-open-btn {
+  padding: 6px 22px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  transition: filter 0.14s;
+  width: 100%;
+}
+.egg-common  .egg-open-btn { background: linear-gradient(135deg, #757575, #424242); }
+.egg-rare    .egg-open-btn { background: linear-gradient(135deg, #1565c0, #0d47a1); }
+.egg-special .egg-open-btn { background: linear-gradient(135deg, #6a1b9a, #4a148c); }
+.egg-open-btn:hover { filter: brightness(1.18); }
+
+.egg-multi-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  transition: filter 0.14s;
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.egg-common  .egg-multi-btn { background: linear-gradient(135deg, #ff8f00, #e65100); }
+.egg-rare    .egg-multi-btn { background: linear-gradient(135deg, #ff8f00, #e65100); }
+.egg-special .egg-multi-btn { background: linear-gradient(135deg, #ff8f00, #e65100); }
+.egg-multi-btn:hover { filter: brightness(1.15); }
+.egg-multi-cost { font-size: 10px; opacity: 0.85; }
+
+/* ── Egg Result Modal ── */
+#egg-result-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.erm-box {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 26px;
+  min-width: 260px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  border: 3px solid transparent;
+  animation: erm-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.erm-box.grade-common    { border-color: #bdbdbd; }
+.erm-box.grade-good      { border-color: #66bb6a; }
+.erm-box.grade-premium   { border-color: #42a5f5; box-shadow: 0 12px 40px rgba(66,165,245,0.35); }
+.erm-box.grade-legendary { border-color: #ab47bc; box-shadow: 0 12px 40px rgba(171,71,188,0.45); }
+.erm-box.grade-mythical  { border-color: #ff7043; box-shadow: 0 12px 40px rgba(255,112,67,0.45); }
+
+@keyframes erm-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.erm-egg-crack {
+  font-size: 24px;
+  margin-bottom: 6px;
+  display: block;
+  animation: erm-shake 0.35s ease;
+}
+@keyframes erm-shake {
+  0%,100% { transform: rotate(0deg); }
+  25%     { transform: rotate(-10deg); }
+  75%     { transform: rotate(10deg); }
+}
+
+.erm-pet-emoji   { font-size: 76px; display: block; line-height: 1.1; margin-bottom: 8px; }
+.erm-grade-badge { margin-bottom: 6px; }
+.erm-pet-name    { font-size: 19px; font-weight: 800; color: #2c3e50; margin-bottom: 8px; }
+.erm-buffs       { margin-bottom: 14px; }
+.erm-buff        { font-size: 12px; color: #555; margin-bottom: 3px; }
+
+.erm-mythical-note {
+  font-size: 11px; font-weight: 700; color: #6a1b9a;
+  background: #f3e5f5; border-radius: 8px;
+  padding: 4px 10px; margin-bottom: 10px; display: inline-block;
+}
+.erm-already-owned { font-size: 12px; color: #388e3c; font-weight: 700; margin-bottom: 10px; }
+.erm-full-note     { font-size: 12px; color: #e53935; margin-bottom: 10px; }
+.erm-feed-note     { font-size: 12px; color: #8d6e63; font-weight: 700; margin-bottom: 10px; }
+.erm-fed-note      { font-size: 12px; color: #2e7d32; font-weight: 700; margin-bottom: 10px; }
+
+.erm-feed-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ff8f00, #e65100);
+  color: #fff; border: none; border-radius: 20px;
+  cursor: pointer; font-size: 13px; font-weight: 700;
+  transition: filter 0.14s;
+  box-shadow: 0 3px 10px rgba(230,81,0,0.35);
+}
+.erm-feed-btn:hover { filter: brightness(1.1); }
+
+.erm-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* Self-feed button in single egg modal */
+.erm-feed-choices {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.erm-self-feed-btn {
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: filter 0.14s;
+  box-shadow: 0 3px 10px rgba(76,175,80,0.35);
+}
+.erm-self-feed-btn:hover { filter: brightness(1.1); }
+
+/* Self-feed button in multi modal */
+.emr-self-feed-btn {
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 0.13s;
+}
+.emr-self-feed-btn:hover { filter: brightness(1.1); }
+
+/* Crop picker inside multi modal card */
+.emr-pick-title {
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 3px;
+  font-weight: 700;
+}
+.emr-pick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+  max-width: 140px;
+}
+.emr-pick-chip {
+  padding: 3px 6px;
+  font-size: 11px;
+  background: #f4f4f4;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.emr-pick-chip:hover { background: #e8f5e9; border-color: #4caf50; }
+.emr-pick-chip.fav   { background: #fff8e1; border-color: #ffb300; }
+
+.erm-adopt {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff; border: none; border-radius: 20px;
+  cursor: pointer; font-size: 14px; font-weight: 700;
+  transition: filter 0.14s;
+  box-shadow: 0 3px 10px rgba(76,175,80,0.4);
+}
+.erm-adopt:hover { filter: brightness(1.1); }
+
+.erm-release {
+  padding: 10px 18px;
+  background: transparent; border: 2px solid #ddd;
+  border-radius: 20px; cursor: pointer;
+  font-size: 13px; color: #888; transition: all 0.13s;
+}
+.erm-release:hover { border-color: #bbb; color: #555; }
+
+.erm-dismiss {
+  padding: 10px 22px;
+  background: #f5f5f5; border: 2px solid #ddd;
+  border-radius: 20px; cursor: pointer;
+  font-size: 13px; color: #666; transition: all 0.13s;
+}
+.erm-dismiss:hover { background: #ebebeb; }
+
 #pet-ground-deco {
   position: absolute;
   bottom: 0;
@@ -747,6 +1256,18 @@ body.harvest-mode  * { cursor: none !important; }
   transform: translate(-30%, -70%);
   display: none;
   filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.4));
+}
+
+/* ── Touch seed follower ── */
+#touch-seed-follow {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  font-size: 40px;
+  line-height: 1;
+  transform: translate(-50%, -120%);
+  display: none;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));
 }
 
 /* ── Toast ── */
@@ -967,6 +1488,340 @@ body.harvest-mode  * { cursor: none !important; }
 /* ── Pet tab button in nav ── */
 .pet-tab-btn { color: var(--green-dark) !important; }
 
+/* ── Save Slots Modal ── */
+#save-slots-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ssm-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 18px 16px;
+  width: min(380px, 94vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.35);
+  animation: erm-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.ssm-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.ssm-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ssm-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #eee;
+}
+
+.ssm-slot.filled { border-color: #a5d6a7; background: #f1f8f1; }
+.ssm-slot.empty  { background: #fafafa; opacity: 0.75; }
+
+.ssm-slot-no {
+  font-size: 12px;
+  font-weight: 800;
+  color: #666;
+  min-width: 36px;
+}
+
+.ssm-slot-info  { flex: 1; min-width: 0; }
+.ssm-slot-main  { font-size: 12px; font-weight: 700; color: #2c3e50; }
+.ssm-slot-time  { font-size: 10px; color: #aaa; margin-top: 2px; }
+.ssm-slot-empty { flex: 1; font-size: 12px; color: #bbb; font-style: italic; }
+
+.ssm-slot-btns {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ssm-btn {
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: filter 0.13s;
+  white-space: nowrap;
+}
+.ssm-save { background: linear-gradient(135deg, #4caf50, #2e7d32); color: #fff; }
+.ssm-load { background: linear-gradient(135deg, #1565c0, #0d47a1); color: #fff; }
+.ssm-del  { background: transparent; border: 1.5px solid #e0e0e0; color: #aaa; font-size: 14px; padding: 3px 7px; }
+.ssm-btn:hover { filter: brightness(1.12); }
+.ssm-del:hover { border-color: #e53935; color: #e53935; filter: none; }
+
+.ssm-close-btn {
+  padding: 10px;
+  width: 100%;
+  background: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  transition: background 0.13s;
+}
+.ssm-close-btn:hover { background: #e8e8e8; }
+
+/* Generic confirm overlay (z-index above save modal) */
+.generic-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Save Slots Trigger Button ── */
+.save-slots-trigger {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.open-save-btn {
+  padding: 8px 22px;
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.14s;
+  box-shadow: 0 3px 10px rgba(21,101,192,0.3);
+}
+.open-save-btn:hover { filter: brightness(1.1); }
+
+/* ── Reset Section ── */
+.reset-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.reset-game-btn {
+  padding: 8px 22px;
+  background: transparent;
+  border: 2px solid #e53935;
+  border-radius: 20px;
+  color: #e53935;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.7;
+}
+.reset-game-btn:hover {
+  background: #fce4ec;
+  opacity: 1;
+}
+
+.backup-restore-section {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border: 2px solid #81c784;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.backup-restore-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.load-backup-btn {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.14s;
+  flex-shrink: 0;
+}
+.load-backup-btn:hover { filter: brightness(1.1); }
+
+/* ── Reset Confirm Modal ── */
+#reset-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rcm-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 28px 22px;
+  min-width: 260px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: erm-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.rcm-icon  { font-size: 36px; }
+.rcm-title { font-size: 17px; font-weight: 800; color: #2c3e50; }
+.rcm-desc  { font-size: 13px; color: #888; line-height: 1.7; }
+
+.rcm-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.rcm-cancel {
+  padding: 9px 22px;
+  border: 2px solid #ddd;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.rcm-cancel:hover { border-color: #bbb; color: #555; }
+
+.rcm-confirm {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.13s;
+  box-shadow: 0 3px 10px rgba(229,57,53,0.4);
+}
+.rcm-confirm:hover { filter: brightness(1.1); }
+
+/* ── Pet Enchant Panel ── */
+.enchant-pool {
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 8px 10px 10px;
+  margin-bottom: 12px;
+}
+
+.enchant-pool-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 3px 2px 0;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #555;
+}
+
+.enchant-card {
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 2px solid #eee;
+}
+
+.enchant-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.enchant-pet-emoji { font-size: 26px; flex-shrink: 0; }
+
+.enchant-pet-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.enchant-pet-name { font-weight: 700; font-size: 13px; }
+.enchant-pet-lv   { font-size: 11px; color: var(--gold-dark); font-weight: 600; }
+
+.enchant-buff-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  border: 1.5px solid #eee;
+}
+
+.enchant-buff-row.locked   { opacity: 0.62; }
+.enchant-buff-row.enchanted { border-color: var(--gold); background: #fffdf0; }
+
+.enchant-row-icon  { font-size: 14px; flex-shrink: 0; }
+.enchant-row-label { flex: 1; font-size: 12px; color: #444; }
+.enchant-lock-tag  { font-size: 10px; color: #bbb; white-space: nowrap; flex-shrink: 0; }
+
+.enchant-btn {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #7b1fa2, #4a148c);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 0.14s;
+  flex-shrink: 0;
+}
+.enchant-btn:hover { filter: brightness(1.18); }
+
+.owned-buff-enchanted { color: #e65100 !important; }
+
 /* ══ Responsive ══ */
 
 /* Medium screens: scale cells, panel fills remaining right space */
@@ -1003,9 +1858,6 @@ body.harvest-mode  * { cursor: none !important; }
 
   /* 5 tab buttons: tighter */
   .tab-btn { font-size: 10px; padding: 8px 1px; }
-
-  /* Pet button now lives in the tab nav */
-  #pet-btn { display: none; }
 
   /* Compact bottom bar */
   #bottom-bar { height: 50px; gap: 8px; padding: 0 10px; }
@@ -1054,6 +1906,105 @@ body.harvest-mode  * { cursor: none !important; }
   .tab-btn { font-size: 9px; padding: 7px 1px; }
 }
 
+/* ── 10連抽 Modal ── */
+#egg-multi-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 650;
+}
+.emr-overlay {
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+}
+.emr-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  width: min(420px, 94vw);
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+  animation: erm-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.emr-header {
+  font-size: 17px; font-weight: 800; color: #2c3e50;
+  text-align: center; margin-bottom: 4px;
+}
+.emr-slots {
+  font-size: 11px; color: #888; text-align: center; margin-bottom: 10px;
+}
+.emr-list {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+  padding-right: 2px;
+}
+.emr-card {
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 12px; padding: 8px 10px;
+  border: 2px solid #eee; background: #fafafa;
+  transition: opacity 0.2s;
+}
+.emr-card.grade-common    { border-color: #bdbdbd; }
+.emr-card.grade-good      { border-color: #66bb6a; }
+.emr-card.grade-premium   { border-color: #42a5f5; }
+.emr-card.grade-legendary { border-color: #ab47bc; }
+.emr-card.grade-mythical  { border-color: #ff7043; }
+.emr-card.emr-dim         { opacity: 0.45; }
+
+.emr-card-emoji  { font-size: 36px; flex-shrink: 0; line-height: 1; }
+.emr-card-info   { flex: 1; min-width: 0; }
+.emr-card-name   { font-size: 13px; font-weight: 800; color: #2c3e50; margin-bottom: 3px; }
+.emr-card-buffs  { display: flex; flex-wrap: wrap; gap: 4px; }
+.emr-buff-tag    { font-size: 10px; color: #555; background: #f0f0f0; border-radius: 4px; padding: 1px 5px; }
+.emr-myth-note   { font-size: 10px; color: #7b1fa2; margin-left: 4px; }
+
+.emr-card-action {
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0;
+}
+.emr-feed-btn {
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #ff8f00, #e65100);
+  color: #fff; border: none; border-radius: 12px;
+  cursor: pointer; font-size: 11px; font-weight: 700;
+  white-space: nowrap; transition: filter 0.13s;
+}
+.emr-feed-btn:hover { filter: brightness(1.1); }
+.emr-adopt-btn {
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff; border: none; border-radius: 12px;
+  cursor: pointer; font-size: 11px; font-weight: 700;
+  white-space: nowrap; transition: filter 0.13s;
+}
+.emr-adopt-btn:hover { filter: brightness(1.1); }
+.emr-skip-btn {
+  padding: 5px 10px;
+  background: transparent; border: 1.5px solid #ddd;
+  border-radius: 12px; cursor: pointer;
+  font-size: 11px; color: #aaa; white-space: nowrap;
+  transition: all 0.12s;
+}
+.emr-skip-btn:hover { border-color: #bbb; color: #777; }
+
+.emr-status-tag {
+  font-size: 11px; font-weight: 700; padding: 3px 9px;
+  border-radius: 10px; white-space: nowrap;
+}
+.emr-status-tag.owned    { color: #2e7d32; background: #e8f5e9; }
+.emr-status-tag.released { color: #9e9e9e; background: #f5f5f5; }
+.emr-status-tag.full     { color: #e53935; background: #fce4ec; }
+
+.emr-close-btn {
+  margin-top: 12px;
+  padding: 10px;
+  width: 100%;
+  background: #f5f5f5; border: 2px solid #ddd;
+  border-radius: 14px; cursor: pointer;
+  font-size: 14px; font-weight: 700; color: #555;
+  transition: background 0.13s;
+}
+.emr-close-btn:hover { background: #e8e8e8; }
+
 </style>
 </head>
 <body>
@@ -1088,7 +2039,6 @@ body.harvest-mode  * { cursor: none !important; }
           <button class="tab-btn active" data-tab="shop">🏪 商店</button>
           <button class="tab-btn" data-tab="warehouse">🏠 倉庫</button>
           <button class="tab-btn" data-tab="tasks">📋 任務</button>
-          <button class="tab-btn pet-tab-btn" data-tab="pet">🐾 寵物</button>
           <button class="tab-btn end-btn" data-tab="end">⏭ 結束</button>
         </nav>
         <div id="panel-body"></div>
@@ -1104,8 +2054,11 @@ body.harvest-mode  * { cursor: none !important; }
     </div>
 
     <button id="pet-btn">🐾</button>
+    <button id="petshop-btn">🍖</button>
+    <button id="enchant-btn">🔮</button>
     <div id="toast-box"></div>
     <div id="cursor-follow">🪣</div>
+    <div id="touch-seed-follow"></div>
 
     <!-- Pet Screen (fixed overlay) -->
     <div id="pet-screen" hidden>
@@ -1123,7 +2076,9 @@ body.harvest-mode  * { cursor: none !important; }
           <span class="cloud">☁️</span>
           <span class="cloud">☁️</span>
         </div>
-        <div id="pet-list"></div>
+        <div id="pet-list-wrap">
+          <div id="pet-list"></div>
+        </div>
         <div id="pet-ground-deco">🌸🌿🌼🌱🌸🌼🌿🌸🌼🌱🌿🌸🌼🌸🌿🌼🌱🌸</div>
       </div>
       <div id="pet-owned">
@@ -1158,20 +2113,20 @@ const CROPS = {
   edamame:     { id: 'edamame',     name: '毛豆',   emoji: '🫘', cost: 21, sell: 60,  days: 4, xp: 17, minLevel: 48,  seasons: [1],       rarity: 'good'    },
   cucumber:    { id: 'cucumber',    name: '小黃瓜', emoji: '🥒', cost: 22, sell: 65,  days: 4, xp: 18, minLevel: 54,  seasons: [1],       rarity: 'good'    },
   // ── 高級 ──────────────────────────────────
-  strawberry:  { id: 'strawberry',  name: '草莓',   emoji: '🍓', cost: 30, sell: 85,  days: 3, xp: 25, minLevel: 64,  seasons: [0],       rarity: 'premium' },
-  cherry:      { id: 'cherry',      name: '櫻桃',   emoji: '🍒', cost: 32, sell: 90,  days: 3, xp: 27, minLevel: 67,  seasons: [0],       rarity: 'premium' },
-  grape:       { id: 'grape',       name: '葡萄',   emoji: '🍇', cost: 38, sell: 108, days: 4, xp: 33, minLevel: 71,  seasons: [2],       rarity: 'premium' },
-  blueberry:   { id: 'blueberry',   name: '藍莓',   emoji: '🫐', cost: 40, sell: 114, days: 4, xp: 35, minLevel: 75,  seasons: [1, 2],    rarity: 'premium' },
-  tomato:      { id: 'tomato',      name: '番茄',   emoji: '🍅', cost: 35, sell: 95,  days: 4, xp: 28, minLevel: 79,  seasons: [1],       rarity: 'premium' },
-  watermelon:  { id: 'watermelon',  name: '西瓜',   emoji: '🍉', cost: 42, sell: 120, days: 5, xp: 37, minLevel: 86,  seasons: [1],       rarity: 'premium' },
-  peach:       { id: 'peach',       name: '桃子',   emoji: '🍑', cost: 43, sell: 120, days: 5, xp: 38, minLevel: 93,  seasons: [0, 1],    rarity: 'premium' },
-  pumpkin:     { id: 'pumpkin',     name: '南瓜',     emoji: '🎃', cost: 45,  sell: 125, days: 5, xp: 40,  minLevel: 100, seasons: [2],    rarity: 'premium'  },
+  strawberry:  { id: 'strawberry',  name: '草莓',   emoji: '🍓', cost: 30, sell: 85,  days: 9,  xp: 25, minLevel: 64,  seasons: [0],       rarity: 'premium' },
+  cherry:      { id: 'cherry',      name: '櫻桃',   emoji: '🍒', cost: 32, sell: 90,  days: 10, xp: 27, minLevel: 67,  seasons: [0],       rarity: 'premium' },
+  grape:       { id: 'grape',       name: '葡萄',   emoji: '🍇', cost: 38, sell: 108, days: 11, xp: 33, minLevel: 71,  seasons: [2],       rarity: 'premium' },
+  blueberry:   { id: 'blueberry',   name: '藍莓',   emoji: '🫐', cost: 40, sell: 114, days: 12, xp: 35, minLevel: 75,  seasons: [1, 2],    rarity: 'premium' },
+  tomato:      { id: 'tomato',      name: '番茄',   emoji: '🍅', cost: 35, sell: 95,  days: 12, xp: 28, minLevel: 79,  seasons: [1],       rarity: 'premium' },
+  watermelon:  { id: 'watermelon',  name: '西瓜',   emoji: '🍉', cost: 42, sell: 120, days: 14, xp: 37, minLevel: 86,  seasons: [1],       rarity: 'premium' },
+  peach:       { id: 'peach',       name: '桃子',   emoji: '🍑', cost: 43, sell: 120, days: 15, xp: 38, minLevel: 93,  seasons: [0, 1],    rarity: 'premium' },
+  pumpkin:     { id: 'pumpkin',     name: '南瓜',     emoji: '🎃', cost: 45,  sell: 125, days: 18, xp: 40,  minLevel: 100, seasons: [2],    rarity: 'premium'  },
   // ── 傳奇 ──────────────────────────────────
-  tulip:       { id: 'tulip',       name: '仙鬱金香', emoji: '🌷', cost: 60,  sell: 168, days: 4, xp: 55,  minLevel: 110, seasons: [0],    rarity: 'legendary' },
-  mango:       { id: 'mango',       name: '神芒',     emoji: '🥭', cost: 75,  sell: 210, days: 5, xp: 70,  minLevel: 130, seasons: [1],    rarity: 'legendary' },
-  lotus:       { id: 'lotus',       name: '靈蓮',     emoji: '🪷', cost: 90,  sell: 252, days: 5, xp: 85,  minLevel: 150, seasons: [0, 1], rarity: 'legendary' },
-  pineapple:   { id: 'pineapple',   name: '龍息果',   emoji: '🍍', cost: 110, sell: 308, days: 6, xp: 105, minLevel: 175, seasons: [1],    rarity: 'legendary' },
-  rose:        { id: 'rose',        name: '帝王薔薇', emoji: '🌹', cost: 135, sell: 378, days: 7, xp: 130, minLevel: 200, seasons: [0],    rarity: 'legendary' },
+  tulip:       { id: 'tulip',       name: '仙鬱金香', emoji: '🌷', cost: 60,  sell: 168, days: 20, xp: 55,  minLevel: 110, seasons: [0, 3],    rarity: 'legendary' },
+  mango:       { id: 'mango',       name: '神芒',     emoji: '🥭', cost: 75,  sell: 210, days: 24, xp: 70,  minLevel: 130, seasons: [1, 2],    rarity: 'legendary' },
+  lotus:       { id: 'lotus',       name: '靈蓮',     emoji: '🪷', cost: 90,  sell: 252, days: 27, xp: 85,  minLevel: 150, seasons: [0, 1, 2], rarity: 'legendary' },
+  pineapple:   { id: 'pineapple',   name: '龍息果',   emoji: '🍍', cost: 110, sell: 308, days: 31, xp: 105, minLevel: 175, seasons: [1, 3],    rarity: 'legendary' },
+  rose:        { id: 'rose',        name: '帝王薔薇', emoji: '🌹', cost: 135, sell: 378, days: 35, xp: 130, minLevel: 200, seasons: [0, 2],    rarity: 'legendary' },
 };
 
 const PET_TYPES = [
@@ -1199,12 +2154,66 @@ const PET_TYPES = [
   { id: 'tiger',    name: '小虎',   emoji: '🐯', grade: 'premium', favCrop: 'tomato',      xpBase: 30, buff: { type: 'sellBonus',    value: 0.35, icon: '💰', label: '販售收益 +35%'    }, buff2: { type: 'xpBonus',      value: 0.2,  icon: '⭐', label: '採收 XP +20%'     } },
   { id: 'lion',     name: '小獅',   emoji: '🦁', grade: 'premium', favCrop: 'watermelon',  xpBase: 28, buff: { type: 'sellBonus',    value: 0.3,  icon: '💰', label: '販售收益 +30%'    }, buff2: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
   { id: 'dragon',   name: '小龍',   emoji: '🐉', grade: 'premium', favCrop: 'eggplant',    xpBase: 30, buff: { type: 'xpBonus',      value: 0.45, icon: '⭐', label: '採收 XP +45%'     }, buff2: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
+  // ── 傳奇 ────────────────────────────────────────────────────────────────────
+  { id: 'phoenix',  name: '鳳凰',   emoji: '🐦‍🔥', grade: 'legendary', favCrop: 'rose',      xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'extraGrowth',  value: 2,    icon: '🌱', label: '每天多成長 2 天'  }, buff2: { type: 'xpBonus',      value: 0.4,  icon: '⭐', label: '採收 XP +40%'     }, buff3: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
+  { id: 'unicorn',  name: '獨角獸', emoji: '🦄',    grade: 'legendary', favCrop: 'lotus',     xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'xpBonus',      value: 0.7,  icon: '⭐', label: '採收 XP +70%'     }, buff2: { type: 'shopDiscount', value: 0.35, icon: '🛒', label: '種子費用 -35%'    }, buff3: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
+  { id: 'shenlong', name: '神龍',   emoji: '🐲',    grade: 'legendary', favCrop: 'pineapple', xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'sellBonus',    value: 0.6,  icon: '💰', label: '販售收益 +60%'    }, buff2: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' }, buff3: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
 ];
+
+const PET_FEEDS = [
+  { id: 'feed_xp',       name: '智慧飼料', emoji: '⭐', desc: '採收 XP +5%',      cost: 800,  buffType: 'xpBonus',      boost: 0.05 },
+  { id: 'feed_sell',     name: '財富飼料', emoji: '💎', desc: '販售收益 +5%',     cost: 1000, buffType: 'sellBonus',    boost: 0.05 },
+  { id: 'feed_discount', name: '節儉飼料', emoji: '🏷️', desc: '種子費用 -5%',     cost: 900,  buffType: 'shopDiscount', boost: 0.05 },
+  { id: 'feed_growth',   name: '成長飼料', emoji: '🌱', desc: '每天多成長 +0.2 天', cost: 1200, buffType: 'extraGrowth',  boost: 0.2  },
+];
+
+const PET_EGGS = [
+  {
+    id: 'egg_common',
+    name: '普通蛋', emoji: '🥚', cls: 'egg-common',
+    cost: 20000,
+    grades:  ['common', 'good'],
+    weights: [70, 30],
+    desc: '普通 70%・優良 30%',
+  },
+  {
+    id: 'egg_rare',
+    name: '稀有蛋', emoji: '🥚', cls: 'egg-rare',
+    cost: 60000,
+    grades:  ['good', 'premium', 'legendary'],
+    weights: [64, 35, 1],
+    desc: '優良 64%・高級 35%・傳奇 1%',
+  },
+  {
+    id: 'egg_special',
+    name: '特殊蛋', emoji: '🥚', cls: 'egg-special',
+    cost: 150000,
+    grades:  ['premium', 'legendary', 'mythical'],
+    weights: [94, 5, 1],
+    desc: '高級 94%・傳奇 5%・神話 1%',
+  },
+];
+
+const ENCHANT_OPTIONS = [
+  { type: 'xpBonus',     value: 0.25, icon: '⭐', label: '採收 XP +25%'       },
+  { type: 'sellBonus',   value: 0.20, icon: '💰', label: '販售收益 +20%'      },
+  { type: 'extraGrowth', value: 1,    icon: '🌱', label: '每天多成長 +1 天'   },
+  { type: 'noWither',    value: true, icon: '💧', label: '一天不澆水不會枯死'  },
+];
+const ENCHANT_COST = 10000;
+
+const EGG_FEED_COST = {
+  common:    1000,
+  good:      5000,
+  premium:   10000,
+  legendary: 50000,
+  mythical:  100000,
+};
 
 const SEASONS       = ['春', '夏', '秋', '冬'];
 const SEASON_CLASSES = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_ICONS   = ['🌸', '☀️', '🍂', '❄️'];
-const SEASON_LENGTH  = 7;
+const SEASON_LENGTH  = 50;
 
 const WEATHERS = [
   { name: '晴天', icon: '☀️',  bonus: 0 },
@@ -1239,7 +2248,7 @@ function xpNeeded(level) { return level * 150 + 50; }
 //  AUDIO / SFX
 // ══════════════════════════════════════════
 
-let sfxMuted = localStorage.getItem('farm_sfx_muted') === '1';
+let sfxMuted        = localStorage.getItem('farm_sfx_muted') === '1';
 
 const SFX = (() => {
   let ctx = null;
@@ -1282,17 +2291,20 @@ const SFX = (() => {
   }
 
   return {
-    plant()    { note(220, 0.1, 0.2, 'triangle'); note(330, 0.08, 0.12, 'triangle', 0.05); },
-    water()    { sweep(700, 250, 0.28, 0.15); sweep(500, 180, 0.22, 0.1, 'sine', 0.07); },
-    harvest()  { note(523, 0.2, 0.22); note(659, 0.2, 0.2, 'sine', 0.08); note(784, 0.35, 0.25, 'sine', 0.16); },
-    sell()     { [523, 659, 784].forEach((f, i) => note(f, 0.12, 0.2, 'triangle', i * 0.055)); },
-    levelUp()  { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.35, 0.28, 'sine', i * 0.1)); },
-    taskDone() { note(784, 0.15, 0.22, 'sine'); note(1047, 0.3, 0.28, 'sine', 0.12); },
-    endDay()   { note(349, 0.7, 0.22, 'sine'); note(440, 0.5, 0.18, 'sine', 0.22); },
-    feedPet()  { note(880, 0.1, 0.18, 'sine'); note(1100, 0.15, 0.2, 'sine', 0.08); },
-    adopt()    { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
-    error()    { note(130, 0.25, 0.22, 'square'); },
-    wither()   { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
+    plant()       { note(220, 0.1, 0.2, 'triangle'); note(330, 0.08, 0.12, 'triangle', 0.05); },
+    water()       { sweep(700, 250, 0.28, 0.15); sweep(500, 180, 0.22, 0.1, 'sine', 0.07); },
+    harvest()     { note(523, 0.2, 0.22); note(659, 0.2, 0.2, 'sine', 0.08); note(784, 0.35, 0.25, 'sine', 0.16); },
+    sell()        { [523, 659, 784].forEach((f, i) => note(f, 0.12, 0.2, 'triangle', i * 0.055)); },
+    levelUp()     { [523, 659, 784, 1047].forEach((f, i) => note(f, 0.35, 0.28, 'sine', i * 0.1)); },
+    petLevelUp()  { sweep(440, 880, 0.12, 0.22, 'triangle'); [659, 880, 1100].forEach((f, i) => note(f, 0.25, 0.2, 'triangle', 0.1 + i * 0.08)); },
+    taskDone()    { note(784, 0.15, 0.22, 'sine'); note(1047, 0.3, 0.28, 'sine', 0.12); },
+    endDay()      { note(349, 0.7, 0.22, 'sine'); note(440, 0.5, 0.18, 'sine', 0.22); },
+    feedPet()     { note(880, 0.1, 0.18, 'sine'); note(1100, 0.15, 0.2, 'sine', 0.08); },
+    eggFeed()     { sweep(300, 600, 0.15, 0.2, 'sine'); note(800, 0.2, 0.18, 'sine', 0.15); note(1000, 0.2, 0.2, 'sine', 0.28); },
+    gacha()       { sweep(200, 1200, 0.35, 0.25, 'sawtooth'); note(1047, 0.4, 0.3, 'sine', 0.3); note(1319, 0.5, 0.28, 'sine', 0.45); },
+    adopt()       { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
+    error()       { note(130, 0.25, 0.22, 'square'); },
+    wither()      { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
   };
 })();
 
@@ -1336,6 +2348,10 @@ const DEFAULT_STATE = () => ({
   petLevels:        {},
   ownedPets:        [],
   activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false },
+  feedInventory:  {},
+  petFeedBoosts:  {},
+  petFeedCounts:  {},
+  petEnchants:    {},
 });
 
 let G = DEFAULT_STATE();
@@ -1368,8 +2384,199 @@ function makeAchievements() {
 //  SAVE / LOAD
 // ══════════════════════════════════════════
 
+const BACKUP_KEY = 'farmGame_v2_backup';
+
 function save() {
   try { localStorage.setItem('farmGame_v2', JSON.stringify(G)); } catch(_) {}
+}
+
+function hasBackup() {
+  return !!localStorage.getItem(BACKUP_KEY);
+}
+
+function resetGame() {
+  try { localStorage.setItem(BACKUP_KEY, JSON.stringify(G)); } catch(_) {}
+  localStorage.removeItem('farmGame_v2');
+  G = DEFAULT_STATE();
+  generateDailyPets();
+  save();
+  G.activeTab = 'tasks';
+  renderAll();
+  showToast('遊戲已重置，可在任務頁面載入舊存檔', 3500);
+}
+
+function loadBackup() {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { showToast('找不到舊存檔'); return; }
+    G = Object.assign(DEFAULT_STATE(), JSON.parse(raw));
+    G.grid.forEach(p => {
+      if (p.watered === undefined) p.watered = false;
+      if (p.dryDays === undefined) p.dryDays = 0;
+    });
+    G.feedingPetIdx  = -1;
+    G.viewingPetIdx  = -1;
+    G.viewingOwnedId = null;
+    if (!G.feedInventory) G.feedInventory = {};
+    if (!G.petFeedBoosts) G.petFeedBoosts = {};
+    if (!G.petFeedCounts) G.petFeedCounts = {};
+    if (!G.petEnchants)   G.petEnchants   = {};
+    reapplyBuffs();
+    localStorage.removeItem(BACKUP_KEY);
+    save();
+    renderAll();
+    showToast('✅ 舊存檔已載入！', 2500);
+  } catch(_) { showToast('載入失敗'); }
+}
+
+function showResetConfirm() {
+  const modal = document.createElement('div');
+  modal.id = 'reset-confirm-modal';
+  modal.innerHTML = `
+    <div class="rcm-box">
+      <div class="rcm-icon">⚠️</div>
+      <div class="rcm-title">確定要重置遊戲？</div>
+      <div class="rcm-desc">所有進度、金幣、寵物都會消失<br>但可在任務頁面載入舊存檔</div>
+      <div class="rcm-actions">
+        <button id="rcm-cancel" class="rcm-cancel">取消</button>
+        <button id="rcm-confirm" class="rcm-confirm">確認重置</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('rcm-cancel').onclick  = () => modal.remove();
+  document.getElementById('rcm-confirm').onclick = () => { modal.remove(); resetGame(); };
+}
+
+// ── Save Slots ─────────────────────────────────────────────────────────────
+const SLOT_KEY = n => `farmGame_slot_${n}`;
+
+function getSlotData(n) {
+  try { const raw = localStorage.getItem(SLOT_KEY(n)); return raw ? JSON.parse(raw) : null; }
+  catch(_) { return null; }
+}
+
+function saveToSlot(n) {
+  const fmt = new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  try {
+    localStorage.setItem(SLOT_KEY(n), JSON.stringify({
+      state: JSON.stringify(G), day: G.day, level: G.level, money: G.money, savedAt: fmt,
+    }));
+  } catch(_) {}
+  showToast(`✅ 已存入第 ${n} 格`, 1800);
+  renderSaveModal();
+}
+
+function loadFromSlot(n) {
+  const slot = getSlotData(n);
+  if (!slot) return;
+  try {
+    G = Object.assign(DEFAULT_STATE(), JSON.parse(slot.state));
+    G.grid.forEach(p => {
+      if (p.watered === undefined) p.watered = false;
+      if (p.dryDays === undefined) p.dryDays = 0;
+    });
+    G.feedingPetIdx = -1; G.viewingPetIdx = -1; G.viewingOwnedId = null;
+    if (!G.feedInventory) G.feedInventory = {};
+    if (!G.petFeedBoosts) G.petFeedBoosts = {};
+    if (!G.petFeedCounts) G.petFeedCounts = {};
+    if (!G.petEnchants)   G.petEnchants   = {};
+    reapplyBuffs();
+    save();
+    document.getElementById('save-slots-modal')?.remove();
+    renderAll();
+    showToast(`✅ 第 ${n} 格存檔已載入`, 2500);
+  } catch(_) { showToast('載入失敗'); }
+}
+
+function deleteSlot(n) {
+  localStorage.removeItem(SLOT_KEY(n));
+  showToast(`🗑️ 已刪除第 ${n} 格`, 1500);
+  renderSaveModal();
+}
+
+function showConfirm(title, desc, confirmLabel, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'generic-confirm-overlay';
+  overlay.innerHTML = `
+    <div class="rcm-box">
+      <div class="rcm-title">${title}</div>
+      ${desc ? `<div class="rcm-desc">${desc}</div>` : ''}
+      <div class="rcm-actions">
+        <button class="rcm-cancel _gc">取消</button>
+        <button class="rcm-confirm _gc">${confirmLabel}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelectorAll('._gc')[0].onclick = () => overlay.remove();
+  overlay.querySelectorAll('._gc')[1].onclick = () => { overlay.remove(); onConfirm(); };
+}
+
+function openSaveModal() {
+  let modal = document.getElementById('save-slots-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'save-slots-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+  renderSaveModal();
+}
+
+function renderSaveModal() {
+  const modal = document.getElementById('save-slots-modal');
+  if (!modal) return;
+  let slotsHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const slot = getSlotData(i);
+    slotsHTML += slot
+      ? `<div class="ssm-slot filled">
+           <div class="ssm-slot-no">第 ${i} 格</div>
+           <div class="ssm-slot-info">
+             <div class="ssm-slot-main">第 ${slot.day} 天・Lv.${slot.level}・💰${slot.money}</div>
+             <div class="ssm-slot-time">${slot.savedAt}</div>
+           </div>
+           <div class="ssm-slot-btns">
+             <button class="ssm-btn ssm-save" data-n="${i}">覆蓋</button>
+             <button class="ssm-btn ssm-load" data-n="${i}">讀取</button>
+             <button class="ssm-btn ssm-del"  data-n="${i}">🗑️</button>
+           </div>
+         </div>`
+      : `<div class="ssm-slot empty">
+           <div class="ssm-slot-no">第 ${i} 格</div>
+           <div class="ssm-slot-empty">— 空槽 —</div>
+           <div class="ssm-slot-btns">
+             <button class="ssm-btn ssm-save" data-n="${i}">存入</button>
+           </div>
+         </div>`;
+  }
+  modal.innerHTML = `
+    <div class="ssm-box">
+      <div class="ssm-title">💾 存檔管理</div>
+      <div class="ssm-list">${slotsHTML}</div>
+      <button id="ssm-close" class="ssm-close-btn">關閉</button>
+    </div>`;
+  modal.querySelector('#ssm-close').addEventListener('click', () => modal.remove());
+  modal.querySelectorAll('.ssm-save').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.n);
+      if (getSlotData(n)) {
+        showConfirm(`覆蓋第 ${n} 格存檔？`, '原有存檔將被取代', '確認覆蓋', () => saveToSlot(n));
+      } else {
+        saveToSlot(n);
+      }
+    });
+  });
+  modal.querySelectorAll('.ssm-load').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.n);
+      showConfirm(`讀取第 ${n} 格存檔？`, '目前未儲存的進度將會消失', '確認讀取', () => loadFromSlot(n));
+    });
+  });
+  modal.querySelectorAll('.ssm-del').forEach(btn => {
+    btn.addEventListener('click', () => deleteSlot(parseInt(btn.dataset.n)));
+  });
 }
 
 function load() {
@@ -1386,6 +2593,10 @@ function load() {
   G.feedingPetIdx  = -1; // always reset transient state
   G.viewingPetIdx  = -1;
   G.viewingOwnedId = null;
+  if (!G.feedInventory) G.feedInventory = {};
+  if (!G.petFeedBoosts) G.petFeedBoosts = {};
+  if (!G.petFeedCounts) G.petFeedCounts = {};
+  if (!G.petEnchants)   G.petEnchants   = {};
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -1453,7 +2664,7 @@ function renderBuffStrip() {
   if (b.xpBonus      > 0)   chips.push(`⭐ 採收 XP +${Math.round(b.xpBonus * 100)}%`);
   if (b.sellBonus    > 0)   chips.push(`💰 販售 +${Math.round(b.sellBonus * 100)}%`);
   if (b.shopDiscount > 0)   chips.push(`🛒 種子 -${Math.round(b.shopDiscount * 100)}%`);
-  if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth}天/日`);
+  if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth.toFixed(1)}天/日`);
   if (b.noWither)           chips.push(`💧 1天不澆水可緩衝`);
   strip.innerHTML = chips.length
     ? chips.map(t => `<span class="buff-chip">${t}</span>`).join('')
@@ -1501,7 +2712,7 @@ function renderGrid() {
 
       const dTag = document.createElement('span');
       dTag.className = 'days-tag';
-      dTag.textContent = plot.daysLeft + '天';
+      dTag.textContent = Math.max(1, Math.round(plot.daysLeft)) + '天';
       cell.appendChild(dTag);
 
     } else if (plot.state === 'ready') {
@@ -1510,6 +2721,7 @@ function renderGrid() {
     } else if (plot.state === 'withered') {
       cell.textContent = '🥀';
       cell.title = '點擊清除枯死的植物';
+
     }
 
     grid.appendChild(cell);
@@ -1524,6 +2736,8 @@ function renderPanel() {
   if      (G.activeTab === 'shop')      renderShop(body);
   else if (G.activeTab === 'warehouse') renderWarehouse(body);
   else if (G.activeTab === 'tasks')     renderTasks(body);
+  else if (G.activeTab === 'enchant')   renderEnchant(body);
+  else if (G.activeTab === 'petshop')   renderPetShop(body);
 }
 
 function renderBottomBar() {
@@ -1544,11 +2758,18 @@ function renderShop(el) {
     html += `<div class="rarity-section-title" style="color:${r.color};border-color:${r.borderColor}">${r.name}</div>`;
 
     crops.forEach(crop => {
-      const locked      = G.level < crop.minLevel;
-      const selected    = G.selectedSeed === crop.id;
-      const inSeason    = crop.seasons.includes(G.season);
-      const seasonIcons = crop.seasons.map(s => SEASON_ICONS[s]).join('');
+      const locked        = G.level < crop.minLevel;
+      const selected      = G.selectedSeed === crop.id;
+      const inSeason      = crop.seasons.includes(G.season);
+      const seasonIcons   = crop.seasons.map(s => SEASON_ICONS[s]).join('');
       const cls = `seed-card rarity-${rarityKey}${locked ? ' locked' : ''}${selected ? ' selected' : ''}`;
+      const discount      = G.activeBuffs.shopDiscount;
+      const displayCost   = discount > 0
+        ? Math.max(1, Math.ceil(crop.cost * (1 - discount)))
+        : crop.cost;
+      const costHTML      = discount > 0
+        ? `<span class="seed-cost discounted"><s>${crop.cost}</s> ${displayCost} 💰</span>`
+        : `<span class="seed-cost">-${crop.cost} 💰</span>`;
 
       html += `
         <div class="${cls}" data-crop="${crop.id}">
@@ -1564,7 +2785,7 @@ function renderShop(el) {
           <div class="seed-prices">
             ${locked
               ? `<span class="lock-label">🔒 Lv.${crop.minLevel}</span>`
-              : `<span class="seed-cost">-${crop.cost} 💰</span><span class="seed-sell">+${crop.sell} 💰</span>`}
+              : `${costHTML}<span class="seed-sell">+${crop.sell} 💰</span>`}
           </div>
         </div>`;
     });
@@ -1610,7 +2831,7 @@ function renderWarehouse(el) {
   html += `<button class="sell-all-btn">全部出售 (+${total} 💰)</button>`;
   el.innerHTML = html;
 
-  el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => sellCrop(b.dataset.crop)));
+  el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => showSellQtyModal(b.dataset.crop)));
   el.querySelector('.sell-all-btn').addEventListener('click', sellAll);
 }
 
@@ -1635,11 +2856,30 @@ function renderTasks(el) {
     }).join('');
   }
 
+  const backupHTML = hasBackup() ? `
+    <div class="backup-restore-section">
+      <div class="backup-restore-label">📂 發現重置前的舊存檔</div>
+      <button id="load-backup-btn" class="load-backup-btn">⏪ 載入舊存檔</button>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="task-section-title">📅 今日任務</div>
     ${taskHTML(makeDailyTasks(), G.dailyTasksDone)}
     <div class="task-section-title" style="margin-top:14px">🏆 成就</div>
-    ${taskHTML(makeAchievements(), G.achievementsDone)}`;
+    ${taskHTML(makeAchievements(), G.achievementsDone)}
+    ${backupHTML}
+    <div class="save-slots-trigger">
+      <button id="open-save-btn" class="open-save-btn">💾 存檔管理</button>
+    </div>
+    <div class="reset-section">
+      <button id="reset-game-btn" class="reset-game-btn">🗑️ 重置遊戲</button>
+    </div>`;
+
+  if (hasBackup()) {
+    el.querySelector('#load-backup-btn').addEventListener('click', loadBackup);
+  }
+  el.querySelector('#open-save-btn').addEventListener('click', openSaveModal);
+  el.querySelector('#reset-game-btn').addEventListener('click', showResetConfirm);
 }
 
 function taskStatValue(key) {
@@ -1656,7 +2896,7 @@ function plantSeed(idx) {
   if (plot.state !== 'empty') return;
 
   const crop = CROPS[G.selectedSeed];
-  const cost = Math.max(1, Math.round(crop.cost * (1 - G.activeBuffs.shopDiscount)));
+  const cost = Math.max(1, Math.ceil(crop.cost * (1 - G.activeBuffs.shopDiscount)));
   if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
 
   SFX.plant();
@@ -1733,8 +2973,9 @@ function clearWithered(idx) {
   renderGrid();
 }
 
-function sellCrop(cropId) {
-  const count = G.inventory[cropId] || 0;
+function sellCrop(cropId, qty) {
+  const available = G.inventory[cropId] || 0;
+  const count = (qty !== undefined) ? Math.min(qty, available) : available;
   if (!count) return;
   const crop   = CROPS[cropId];
   const earned = Math.round(crop.sell * count * (1 + G.activeBuffs.sellBonus));
@@ -1742,13 +2983,55 @@ function sellCrop(cropId) {
   G.money       += earned;
   G.earnedToday += earned;
   G.totalEarned += earned;
-  delete G.inventory[cropId];
+  G.inventory[cropId] -= count;
+  if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
 
   SFX.sell();
   showToast(`出售 ${crop.emoji} ×${count}，獲得 +${earned} 💰`);
   checkTasks();
   save();
   renderAll();
+}
+
+function showSellQtyModal(cropId) {
+  const crop = CROPS[cropId];
+  const max  = G.inventory[cropId] || 0;
+  if (!max) return;
+
+  document.getElementById('sell-qty-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'sell-qty-modal';
+  let qty = 1;
+
+  function renderModal() {
+    const earned = Math.round(crop.sell * qty * (1 + G.activeBuffs.sellBonus));
+    modal.innerHTML = `
+      <div class="sqm-box">
+        <div class="sqm-title">${crop.emoji} ${crop.name} 出售</div>
+        <div class="sqm-stock">持有：${max} 個</div>
+        <div class="sqm-controls">
+          <button class="sqm-btn" id="sqm-minus">－</button>
+          <span class="sqm-qty">${qty}</span>
+          <button class="sqm-btn" id="sqm-plus">＋</button>
+        </div>
+        <div class="sqm-all-hint">或 <button class="sqm-max-btn" id="sqm-max">全部 (${max})</button></div>
+        <div class="sqm-total">合計 +${earned} 💰</div>
+        <div class="sqm-actions">
+          <button class="sqm-cancel" id="sqm-cancel">取消</button>
+          <button class="sqm-confirm" id="sqm-confirm">出售</button>
+        </div>
+      </div>`;
+    modal.querySelector('#sqm-minus').onclick   = () => { qty = Math.max(1, qty - 1); renderModal(); };
+    modal.querySelector('#sqm-plus').onclick    = () => { qty = Math.min(max, qty + 1); renderModal(); };
+    modal.querySelector('#sqm-max').onclick     = () => { qty = max; renderModal(); };
+    modal.querySelector('#sqm-cancel').onclick  = () => modal.remove();
+    modal.querySelector('#sqm-confirm').onclick = () => { modal.remove(); sellCrop(cropId, qty); };
+  }
+
+  renderModal();
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 function sellAll() {
@@ -1932,6 +3215,13 @@ function getPetLevel(petId) {
   return G.petLevels[petId] || 1;
 }
 
+function getPetEffBuff(petId, slot) {
+  const enc = (G.petEnchants || {})[petId];
+  if (enc && enc[slot]) return enc[slot];
+  const pt = PET_TYPES.find(p => p.id === petId);
+  return pt ? (pt[slot] || null) : null;
+}
+
 function scaledBuffValue(buff, level) {
   if (buff.type === 'noWither') return buff.value;
   return buff.value * (1 + 0.3 * (level - 1));
@@ -1970,17 +3260,33 @@ function reapplyBuffs() {
     if (!pet.fed) return;
     counted.add(pet.id);
     applyPetBuff(pet.id, pet.buff);
-    if (pet.buff2) applyPetBuff(pet.id, pet.buff2);
+    const db2 = getPetEffBuff(pet.id, 'buff2');
+    if (db2) applyPetBuff(pet.id, db2);
+    const db3 = getPetEffBuff(pet.id, 'buff3');
+    if (db3) applyPetBuff(pet.id, db3);
   });
 
   // Owned pets always provide passive buff (skip if already counted above)
   (G.ownedPets || []).forEach(petId => {
-    if (counted.has(petId)) return;
-    const pt = PET_TYPES.find(p => p.id === petId);
-    if (!pt) return;
-    applyPetBuff(petId, pt.buff);
-    if (pt.buff2) applyPetBuff(petId, pt.buff2);
+    if (!counted.has(petId)) {
+      const pt = PET_TYPES.find(p => p.id === petId);
+      if (pt) {
+        applyPetBuff(petId, pt.buff);
+        const ob2 = getPetEffBuff(petId, 'buff2');
+        if (ob2) applyPetBuff(petId, ob2);
+        const ob3 = getPetEffBuff(petId, 'buff3');
+        if (ob3) applyPetBuff(petId, ob3);
+      }
+    }
+    // Feed boosts are permanent upgrades — always apply for owned pets
+    const boosts = (G.petFeedBoosts || {})[petId] || {};
+    Object.entries(boosts).forEach(([type, val]) => {
+      G.activeBuffs[type] = (G.activeBuffs[type] || 0) + val;
+    });
   });
+
+  // Cap shopDiscount at 90% so cost never drops to 0 or negative
+  G.activeBuffs.shopDiscount = Math.min(0.9, G.activeBuffs.shopDiscount);
 }
 
 function upgradeByPetId(petId) {
@@ -1992,6 +3298,7 @@ function upgradeByPetId(petId) {
   G.money -= cost;
   G.petLevels[petId] = lv + 1;
   reapplyBuffs();
+  SFX.petLevelUp();
   showToast(`${pt?.emoji || ''} ${pt?.name || ''} 升到 Lv.${lv + 1}！`, 2500);
   save();
   renderPetScreen();
@@ -2024,6 +3331,7 @@ function releasePet(petId) {
   const pt = PET_TYPES.find(p => p.id === petId);
   G.ownedPets = G.ownedPets.filter(id => id !== petId);
   if (G.viewingOwnedId === petId) G.viewingOwnedId = null;
+  if (G.petEnchants && G.petEnchants[petId]) delete G.petEnchants[petId];
   reapplyBuffs();
   showToast(`🌿 ${pt?.emoji || ''} ${pt?.name || ''} 已放生，祝牠一路順風！`, 3000);
   save();
@@ -2070,7 +3378,10 @@ function renderPetScreen() {
         const isMax    = lv >= 5;
         const eff      = scaledBuffValue(pet.buff, lv);
         const effLabel = formatBuffLabel(pet.buff, eff);
-        const eff2Label = pet.buff2 ? formatBuffLabel(pet.buff2, scaledBuffValue(pet.buff2, lv)) : null;
+        const petBuff2  = getPetEffBuff(pet.id, 'buff2');
+        const petBuff3  = getPetEffBuff(pet.id, 'buff3');
+        const eff2Label = petBuff2 ? formatBuffLabel(petBuff2, scaledBuffValue(petBuff2, lv)) : null;
+        const eff3Label = petBuff3 ? formatBuffLabel(petBuff3, scaledBuffValue(petBuff3, lv)) : null;
         const cost     = upgradeCost(lv);
         const isOwned  = (G.ownedPets || []).includes(pet.id);
         feedContent = `
@@ -2078,7 +3389,8 @@ function renderPetScreen() {
           <div class="pet-stat-panel">
             <div class="pet-stat-lv">⭐ Lv.${lv}</div>
             <div class="pet-stat-buff">${pet.buff.icon} ${effLabel}</div>
-            ${eff2Label ? `<div class="pet-stat-buff pet-stat-buff2">${pet.buff2.icon} ${eff2Label}</div>` : ''}
+            ${eff2Label ? `<div class="pet-stat-buff pet-stat-buff2">${petBuff2.icon} ${eff2Label}${(G.petEnchants||{})[pet.id]?.buff2 ? ' ✨' : ''}</div>` : ''}
+            ${eff3Label ? `<div class="pet-stat-buff pet-stat-buff3">${petBuff3.icon} ${eff3Label}${(G.petEnchants||{})[pet.id]?.buff3 ? ' ✨' : ''}</div>` : ''}
             ${isMax
               ? `<div class="pet-stat-maxlv">✨ 已達最高等級</div>`
               : `<div class="pet-stat-cost">升級費用：${cost} 💰</div>
@@ -2094,19 +3406,26 @@ function renderPetScreen() {
           <button class="pet-view-btn" data-act="view" data-pet="${idx}">📊 點即可查看屬性</button>`;
       }
     } else if (isFeedMode) {
-      const items = Object.entries(G.inventory);
-      if (!items.length) {
+      const allItems = Object.entries(G.inventory);
+      const eligible = pet.foodRarities
+        ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+        : allItems.filter(([, cnt]) => cnt >= 10);
+      if (!eligible.length) {
+        const hint = pet.foodRarities
+          ? '沒有足夠的傳奇或神話農作物<br>每次餵食需要 10 個相同作物'
+          : '背包沒有足夠的農作物<br>每次餵食需要 10 個相同作物';
         feedContent = `
-          <div class="no-food-msg">背包沒有農作物<br>先回農場收穫吧！</div>
+          <div class="no-food-msg">${hint}</div>
           <button class="food-cancel-btn" data-act="cancel">取消</button>`;
       } else {
-        const chips = items.map(([cid, cnt]) => {
+        const chips = eligible.map(([cid, cnt]) => {
           const c = CROPS[cid];
           const isFav = cid === pet.favCrop;
-          return `<button class="food-chip${isFav ? ' fav-chip' : ''}" data-act="feed" data-pet="${idx}" data-crop="${cid}">${c.emoji} ${c.name}×${cnt}${isFav ? ' ★' : ''}</button>`;
+          return `<button class="food-chip${isFav ? ' fav-chip' : ''}" data-act="feed" data-pet="${idx}" data-crop="${cid}">${c.emoji} ${c.name} ×${cnt}${isFav ? ' ★' : ''}</button>`;
         }).join('');
         feedContent = `
           <div class="food-select-title">選擇要餵的食物</div>
+          <div class="food-cost-note">每次消耗 10 個</div>
           <div class="food-grid">${chips}</div>
           <button class="food-cancel-btn" data-act="cancel">取消</button>`;
       }
@@ -2123,8 +3442,10 @@ function renderPetScreen() {
       <span class="pet-emoji-big">${pet.emoji}</span>
       <div class="pet-name">${pet.name}</div>
       <div class="pet-fav-food">喜歡：${favCrop ? favCrop.emoji + ' ' + favCrop.name : '?'}</div>
+      ${pet.foodRarities ? `<div class="pet-food-restrict">🍽️ 只吃傳奇 / 神話作物</div>` : ''}
       <div class="pet-buff-tag${pet.fed ? ' active' : ''}">${pet.buff.icon} ${pet.buff.label}</div>
-      ${pet.buff2 ? `<div class="pet-buff-tag pet-buff2-tag${pet.fed ? ' active' : ''}">${pet.buff2.icon} ${pet.buff2.label}</div>` : ''}
+      ${(() => { const e2 = getPetEffBuff(pet.id, 'buff2'); return e2 ? `<div class="pet-buff-tag pet-buff2-tag${pet.fed ? ' active' : ''}">${e2.icon} ${e2.label}${(G.petEnchants||{})[pet.id]?.buff2 ? ' ✨' : ''}</div>` : ''; })()}
+      ${(() => { const e3 = getPetEffBuff(pet.id, 'buff3'); return e3 ? `<div class="pet-buff-tag pet-buff3-tag${pet.fed ? ' active' : ''}">${e3.icon} ${e3.label}${(G.petEnchants||{})[pet.id]?.buff3 ? ' ✨' : ''}</div>` : ''; })()}
       <span class="pet-mood">${moodEmoji}</span>
       ${feedContent}`;
     list.appendChild(card);
@@ -2188,10 +3509,20 @@ function renderOwnedPets() {
     const isMax    = lv >= 5;
     const eff      = scaledBuffValue(pt.buff, lv);
     const effLabel = formatBuffLabel(pt.buff, eff);
-    const eff2Label = pt.buff2 ? formatBuffLabel(pt.buff2, scaledBuffValue(pt.buff2, lv)) : null;
+    const ownedBuff2 = getPetEffBuff(G.viewingOwnedId, 'buff2');
+    const ownedBuff3 = getPetEffBuff(G.viewingOwnedId, 'buff3');
+    const eff2Label  = ownedBuff2 ? formatBuffLabel(ownedBuff2, scaledBuffValue(ownedBuff2, lv)) : null;
+    const eff3Label  = ownedBuff3 ? formatBuffLabel(ownedBuff3, scaledBuffValue(ownedBuff3, lv)) : null;
     const cost     = upgradeCost(lv);
     const dg     = pt.grade || 'common';
     const dgInfo = RARITIES[dg];
+    const feedBoostLines = Object.entries((G.petFeedBoosts || {})[G.viewingOwnedId] || {})
+      .filter(([, v]) => v > 0)
+      .map(([type, val]) => {
+        const fd  = PET_FEEDS.find(f => f.buffType === type);
+        const lbl = type === 'extraGrowth' ? `+${val.toFixed(1)}天/日` : `+${Math.round(val * 100)}%`;
+        return `<div class="owned-detail-buff owned-feed-boost">${fd?.emoji || '🍖'} ${fd?.name || ''} ${lbl}</div>`;
+      }).join('');
     detail.innerHTML = `
       <div class="owned-detail-inner">
         <span class="owned-detail-emoji">${pt.emoji}</span>
@@ -2199,7 +3530,9 @@ function renderOwnedPets() {
           <div class="owned-detail-name">${pt.name} <span class="rarity-badge pet-grade-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span></div>
           <div class="owned-detail-lv">⭐ Lv.${lv}</div>
           <div class="owned-detail-buff">${pt.buff.icon} ${effLabel}</div>
-          ${eff2Label ? `<div class="owned-detail-buff">${pt.buff2.icon} ${eff2Label}</div>` : ''}
+          ${eff2Label ? `<div class="owned-detail-buff${(G.petEnchants||{})[G.viewingOwnedId]?.buff2 ? ' owned-buff-enchanted' : ''}">${ownedBuff2.icon} ${eff2Label}${(G.petEnchants||{})[G.viewingOwnedId]?.buff2 ? ' ✨' : ''}</div>` : ''}
+          ${eff3Label ? `<div class="owned-detail-buff${(G.petEnchants||{})[G.viewingOwnedId]?.buff3 ? ' owned-buff-enchanted' : ''}">${ownedBuff3.icon} ${eff3Label}${(G.petEnchants||{})[G.viewingOwnedId]?.buff3 ? ' ✨' : ''}</div>` : ''}
+          ${feedBoostLines}
         </div>
         <div class="owned-detail-actions">
           ${isMax
@@ -2222,10 +3555,19 @@ function feedPet(petIdx, cropId) {
   const pet  = G.dailyPets[petIdx];
   const crop = CROPS[cropId];
   if (!pet || !crop || pet.fed) return;
-  if (!G.inventory[cropId]) return;
+  if (!G.inventory[cropId] || G.inventory[cropId] < 10) {
+    SFX.error();
+    showToast('需要 10 個相同作物才能餵食！', 2000);
+    return;
+  }
+  if (pet.foodRarities && !pet.foodRarities.includes(crop.rarity)) {
+    SFX.error();
+    showToast(`${pet.emoji} ${pet.name} 只吃傳奇或神話作物！`, 2500);
+    return;
+  }
 
-  G.inventory[cropId]--;
-  if (G.inventory[cropId] === 0) delete G.inventory[cropId];
+  G.inventory[cropId] -= 10;
+  if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
 
   const isFav     = cropId === pet.favCrop;
   const xpGain    = isFav ? pet.xpBase * 2 : pet.xpBase;
@@ -2250,6 +3592,577 @@ function feedPet(petIdx, cropId) {
   save();
   renderPetScreen();
   renderAll(); // update buff strip + topbar
+}
+
+// ── Pet Enchant ───────────────────────────
+
+function enchantPet(petId, slot) {
+  if (G.money < ENCHANT_COST) {
+    SFX.error();
+    showToast(`💰 金幣不足！需要 ${ENCHANT_COST.toLocaleString()} 金幣`);
+    return;
+  }
+  const rolled = ENCHANT_OPTIONS[Math.floor(Math.random() * ENCHANT_OPTIONS.length)];
+  if (!G.petEnchants) G.petEnchants = {};
+  if (!G.petEnchants[petId]) G.petEnchants[petId] = {};
+  G.petEnchants[petId][slot] = { ...rolled };
+  G.money -= ENCHANT_COST;
+  reapplyBuffs();
+  SFX.gacha();
+  const pt = PET_TYPES.find(p => p.id === petId);
+  showToast(`✨ ${pt?.emoji || ''} ${pt?.name || ''} 附魔：${rolled.icon} ${rolled.label}！`, 3000);
+  save();
+  renderAll();
+}
+
+function renderEnchant(el) {
+  const owned = G.ownedPets || [];
+  if (!owned.length) {
+    el.innerHTML = `<div class="empty-msg">先收留寵物才能進行附魔 🔮<br>在寵物頁面餵食後點「收留牠」</div>`;
+    return;
+  }
+
+  let html = `
+    <div class="shop-hint">隨機更換寵物的副能力<br>每次費用 <b>${ENCHANT_COST.toLocaleString()} 💰</b></div>
+    <div class="enchant-pool">
+      <div class="section-title">可能的結果</div>
+      ${ENCHANT_OPTIONS.map(o => `<div class="enchant-pool-chip">${o.icon} ${o.label}</div>`).join('')}
+    </div>`;
+
+  owned.forEach(petId => {
+    const pt = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return;
+    const lv     = getPetLevel(petId);
+    const dg     = pt.grade || 'common';
+    const dgInfo = RARITIES[dg];
+    const enc    = (G.petEnchants || {})[petId] || {};
+
+    const eff2 = getPetEffBuff(petId, 'buff2');
+    const eff3 = getPetEffBuff(petId, 'buff3');
+    const hasNativeBuff3 = !!pt.buff3;
+
+    const primaryLabel = formatBuffLabel(pt.buff, scaledBuffValue(pt.buff, lv));
+
+    const b2Label = eff2 ? formatBuffLabel(eff2, scaledBuffValue(eff2, lv)) : '尚未附魔';
+    const b2Icon  = eff2 ? eff2.icon : '❓';
+
+    html += `
+      <div class="enchant-card">
+        <div class="enchant-card-head">
+          <span class="enchant-pet-emoji">${pt.emoji}</span>
+          <div class="enchant-pet-info">
+            <span class="enchant-pet-name">${pt.name}</span>
+            <span class="rarity-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span>
+            <span class="enchant-pet-lv">Lv.${lv}</span>
+          </div>
+        </div>
+        <div class="enchant-buff-row locked">
+          <span class="enchant-row-icon">${pt.buff.icon}</span>
+          <span class="enchant-row-label">${primaryLabel}</span>
+          <span class="enchant-lock-tag">🔒 主能力</span>
+        </div>
+        <div class="enchant-buff-row${enc.buff2 ? ' enchanted' : ''}">
+          <span class="enchant-row-icon">${b2Icon}</span>
+          <span class="enchant-row-label">${b2Label}${enc.buff2 ? ' ✨' : ''}</span>
+          <button class="enchant-btn" data-petid="${petId}" data-slot="buff2">🔮 附魔</button>
+        </div>`;
+
+    if (hasNativeBuff3) {
+      const b3Label = eff3 ? formatBuffLabel(eff3, scaledBuffValue(eff3, lv)) : '尚未附魔';
+      const b3Icon  = eff3 ? eff3.icon : '❓';
+      html += `
+        <div class="enchant-buff-row${enc.buff3 ? ' enchanted' : ''}">
+          <span class="enchant-row-icon">${b3Icon}</span>
+          <span class="enchant-row-label">${b3Label}${enc.buff3 ? ' ✨' : ''}</span>
+          <button class="enchant-btn" data-petid="${petId}" data-slot="buff3">🔮 附魔</button>
+        </div>`;
+    }
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.enchant-btn').forEach(btn => {
+    btn.addEventListener('click', () => enchantPet(btn.dataset.petid, btn.dataset.slot));
+  });
+}
+
+// ── Pet Shop ──────────────────────────────
+
+function renderPetShop(el) {
+  let html = '<div class="shop-hint">購買飼料強化寵物，或開蛋獲得新夥伴</div>';
+
+  html += '<div class="task-section-title">🏪 飼料商店</div>';
+  PET_FEEDS.forEach(feed => {
+    html += `
+      <div class="feed-shop-item">
+        <span class="feed-emoji">${feed.emoji}</span>
+        <div class="feed-info">
+          <div class="feed-name">${feed.name}</div>
+          <div class="feed-desc">${feed.desc}</div>
+        </div>
+        <div class="feed-right">
+          <div class="feed-cost">-${feed.cost} 💰</div>
+          <button class="feed-buy-btn" data-feed="${feed.id}">購買</button>
+        </div>
+      </div>`;
+  });
+
+  const ownedFeeds = Object.entries(G.feedInventory || {}).filter(([, cnt]) => cnt > 0);
+  html += '<div class="task-section-title" style="margin-top:14px">🎒 飼料庫存</div>';
+  if (!ownedFeeds.length) {
+    html += '<div class="empty-msg" style="padding:12px 0">尚未購買任何飼料</div>';
+  } else {
+    ownedFeeds.forEach(([feedId, cnt]) => {
+      const feed = PET_FEEDS.find(f => f.id === feedId);
+      if (!feed) return;
+      html += `
+        <div class="feed-inv-item">
+          <span class="feed-emoji">${feed.emoji}</span>
+          <div class="feed-info">
+            <div class="feed-name">${feed.name} <span class="feed-cnt">×${cnt}</span></div>
+            <div class="feed-desc">${feed.desc}</div>
+          </div>
+          <button class="feed-use-btn" data-feed="${feedId}">使用</button>
+        </div>`;
+    });
+  }
+
+  html += '<div class="task-section-title" style="margin-top:14px">🥚 寵物蛋</div>';
+  html += '<div class="egg-feed-hint">🌾 開蛋後可自己餵食農作物，或花費金幣請商人代勞，才能收留寵物</div>';
+  PET_EGGS.forEach(egg => {
+    html += `
+      <div class="egg-shop-card ${egg.cls}">
+        <span class="egg-shop-emoji">${egg.emoji}</span>
+        <div class="egg-shop-name">${egg.name}</div>
+        <div class="egg-shop-desc">${egg.desc}</div>
+        <div class="egg-shop-cost">${egg.cost.toLocaleString()} 💰</div>
+        <div class="egg-btn-group">
+          <button class="egg-open-btn" data-egg="${egg.id}">✨ 單抽</button>
+          <button class="egg-multi-btn" data-egg="${egg.id}">✨×10 連抽<span class="egg-multi-cost">${(egg.cost * 10).toLocaleString()} 💰</span></button>
+        </div>
+      </div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.feed-buy-btn').forEach(b => b.addEventListener('click', () => buyFeed(b.dataset.feed)));
+  el.querySelectorAll('.feed-use-btn').forEach(b => b.addEventListener('click', () => showFeedUseModal(b.dataset.feed)));
+  el.querySelectorAll('.egg-open-btn').forEach(b => b.addEventListener('click', () => openEgg(b.dataset.egg)));
+  el.querySelectorAll('.egg-multi-btn').forEach(b => b.addEventListener('click', () => openEggMulti(b.dataset.egg)));
+}
+
+function buyFeed(feedId) {
+  const feed = PET_FEEDS.find(f => f.id === feedId);
+  if (!feed) return;
+  if (G.money < feed.cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+  G.money -= feed.cost;
+  G.feedInventory[feedId] = (G.feedInventory[feedId] || 0) + 1;
+  SFX.sell();
+  showToast(`購買了 ${feed.emoji} ${feed.name}！`);
+  save();
+  renderAll();
+}
+
+function showFeedUseModal(feedId) {
+  const feed  = PET_FEEDS.find(f => f.id === feedId);
+  const owned = G.ownedPets || [];
+  if (!feed || !(G.feedInventory[feedId] > 0)) return;
+  if (!owned.length) { showToast('先收留一隻寵物再使用飼料！', 2500); return; }
+
+  document.getElementById('feed-use-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'feed-use-modal';
+
+  const petList = owned.map(petId => {
+    const pt = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return '';
+    const lv      = getPetLevel(petId);
+    const used    = ((G.petFeedCounts || {})[petId] || {})[feed.buffType] || 0;
+    const isFull  = used >= 3;
+    const cur     = ((G.petFeedBoosts || {})[petId] || {})[feed.buffType] || 0;
+    const curLabel = used > 0
+      ? `${used}/3 次（${feed.buffType === 'extraGrowth' ? '+' + cur.toFixed(1) + '天/日' : '+' + Math.round(cur * 100) + '%'}）`
+      : '0/3 次';
+    return `
+      <div class="fum-pet${isFull ? ' fum-pet-full' : ''}">
+        <span class="fum-pet-emoji">${pt.emoji}</span>
+        <div class="fum-pet-info">
+          <div class="fum-pet-name">${pt.name} Lv.${lv}</div>
+          <div class="fum-pet-boost">${curLabel}</div>
+        </div>
+        <button class="fum-apply-btn" data-petid="${petId}" ${isFull ? 'disabled' : ''}>${isFull ? '已滿' : '套用'}</button>
+      </div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="fum-box">
+      <div class="fum-title">${feed.emoji} ${feed.name}</div>
+      <div class="fum-desc">${feed.desc}（永久）</div>
+      <div class="fum-label">選擇要強化的寵物</div>
+      <div class="fum-pet-list">${petList}</div>
+      <button class="fum-cancel" id="fum-cancel">取消</button>
+    </div>`;
+
+  modal.querySelector('#fum-cancel').onclick = () => modal.remove();
+  modal.querySelectorAll('.fum-apply-btn').forEach(btn => {
+    btn.onclick = () => { modal.remove(); applyFeedToPet(feedId, btn.dataset.petid); };
+  });
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function applyFeedToPet(feedId, petId) {
+  const feed = PET_FEEDS.find(f => f.id === feedId);
+  const pt   = PET_TYPES.find(p => p.id === petId);
+  if (!feed || !pt || !(G.feedInventory[feedId] > 0)) return;
+
+  if (!G.petFeedCounts[petId]) G.petFeedCounts[petId] = {};
+  const used = G.petFeedCounts[petId][feed.buffType] || 0;
+  if (used >= 3) {
+    SFX.error();
+    showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 已達上限（3次）！`, 2500);
+    return;
+  }
+
+  G.feedInventory[feedId]--;
+  if (G.feedInventory[feedId] <= 0) delete G.feedInventory[feedId];
+
+  if (!G.petFeedBoosts[petId]) G.petFeedBoosts[petId] = {};
+  G.petFeedBoosts[petId][feed.buffType]  = (G.petFeedBoosts[petId][feed.buffType] || 0) + feed.boost;
+  G.petFeedCounts[petId][feed.buffType]  = used + 1;
+
+  reapplyBuffs();
+  SFX.feedPet();
+  showToast(`${pt.emoji} ${pt.name} 的 ${feed.emoji} 技能提升！（${used + 1}/3）`, 2500);
+  save();
+  renderAll();
+}
+
+// ── Pet Eggs ──────────────────────────────
+
+function rollEggResult(egg) {
+  const total = egg.weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  let rolledGrade = egg.grades[egg.grades.length - 1];
+  for (let i = 0; i < egg.grades.length; i++) {
+    r -= egg.weights[i];
+    if (r <= 0) { rolledGrade = egg.grades[i]; break; }
+  }
+  let pool = PET_TYPES.filter(p => p.grade === rolledGrade);
+  let mythicalFallback = false;
+  if (!pool.length) {
+    mythicalFallback = true;
+    rolledGrade = 'legendary';
+    pool = PET_TYPES.filter(p => p.grade === rolledGrade);
+  }
+  const pet = pool[Math.floor(Math.random() * pool.length)];
+  return { pet, grade: rolledGrade, mythicalFallback };
+}
+
+function openEgg(eggId) {
+  const egg = PET_EGGS.find(e => e.id === eggId);
+  if (!egg) return;
+  if (G.money < egg.cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+  G.money -= egg.cost;
+  SFX.gacha();
+  const { pet, grade, mythicalFallback } = rollEggResult(egg);
+  save();
+  renderAll();
+  showEggResultModal(pet, grade, mythicalFallback);
+}
+
+function openEggMulti(eggId) {
+  const egg = PET_EGGS.find(e => e.id === eggId);
+  if (!egg) return;
+  const totalCost = egg.cost * 10;
+  if (G.money < totalCost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+  G.money -= totalCost;
+  SFX.gacha();
+  const results = Array.from({ length: 10 }, () => rollEggResult(egg));
+  save();
+  renderAll();
+  showEggMultiResultModal(results);
+}
+
+function showEggResultModal(pet, grade, mythicalFallback) {
+  document.getElementById('egg-result-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'egg-result-modal';
+  document.body.appendChild(modal);
+
+  let fed          = false;
+  let selfFeedMode = false;
+  let firstRender  = true;
+
+  function render() {
+    const rarity   = RARITIES[grade];
+    const isOwned  = (G.ownedPets || []).includes(pet.id);
+    const isFull   = (G.ownedPets || []).length >= 5;
+    const feedCost = EGG_FEED_COST[grade];
+
+    const buffLines = [pet.buff, pet.buff2, pet.buff3]
+      .filter(Boolean)
+      .map(b => `<div class="erm-buff">${b.icon} ${b.label}</div>`)
+      .join('');
+
+    const mythNote = mythicalFallback
+      ? '<div class="erm-mythical-note">✨ 神話寵物即將推出！本次以傳奇替代</div>'
+      : '';
+
+    let adoptArea;
+    if (isOwned) {
+      adoptArea = `
+        <div class="erm-already-owned">🏡 已收留此寵物</div>
+        <button class="erm-dismiss" id="erm-ok">確認</button>`;
+    } else if (fed) {
+      adoptArea = `
+        <div class="erm-fed-note">🍖 牠已吃飽，可以收留了！</div>
+        <div class="erm-actions">
+          ${isFull
+            ? '<div class="erm-full-note">農場已滿（5/5）</div>'
+            : '<button class="erm-adopt" id="erm-adopt">🏠 收留牠！</button>'}
+          <button class="erm-release" id="erm-release">🌿 放生</button>
+        </div>`;
+    } else if (selfFeedMode) {
+      const allItems = Object.entries(G.inventory);
+      const eligible = pet.foodRarities
+        ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+        : allItems.filter(([, cnt]) => cnt >= 10);
+      if (!eligible.length) {
+        const hint = pet.foodRarities ? '沒有足夠的傳奇或神話農作物' : '背包中沒有足夠的農作物';
+        adoptArea = `
+          <div class="erm-feed-note">${hint}<br><small>每次餵食需要 10 個相同作物</small></div>
+          <div class="erm-actions"><button class="erm-dismiss" id="erm-self-cancel">返回</button></div>`;
+      } else {
+        const chips = eligible.map(([cid, cnt]) => {
+          const c   = CROPS[cid];
+          const fav = cid === pet.favCrop;
+          return `<button class="food-chip${fav ? ' fav-chip' : ''}" data-crop="${cid}">${c.emoji} ${c.name} ×${cnt}${fav ? ' ★' : ''}</button>`;
+        }).join('');
+        adoptArea = `
+          <div class="food-select-title">選擇要餵的食物（消耗 10 個）</div>
+          ${pet.foodRarities ? '<div class="erm-feed-note" style="font-size:11px;margin:2px 0 4px">只吃傳奇 / 神話作物</div>' : ''}
+          <div class="food-grid" id="erm-food-grid">${chips}</div>
+          <div class="erm-actions"><button class="erm-dismiss" id="erm-self-cancel">取消</button></div>`;
+      }
+    } else {
+      adoptArea = `
+        <div class="erm-feed-note">需要先餵養才能收留</div>
+        <div class="erm-feed-choices">
+          <button class="erm-self-feed-btn" id="erm-self-feed">🌾 自己餵養</button>
+          ${isFull ? '' : `<button class="erm-feed-btn" id="erm-feed">🍖 商人 ${feedCost.toLocaleString()}💰</button>`}
+        </div>
+        <div class="erm-actions" style="margin-top:8px">
+          <button class="erm-release" id="erm-release">🌿 放生</button>
+        </div>`;
+    }
+
+    modal.innerHTML = `
+      <div class="erm-box grade-${grade}">
+        ${mythNote}
+        ${firstRender ? '<div class="erm-egg-crack">🥚✨</div>' : ''}
+        <div class="erm-pet-emoji">${pet.emoji}</div>
+        <div class="erm-grade-badge">
+          <span class="rarity-badge" style="color:${rarity.badgeColor};background:${rarity.badgeBg};font-size:13px;padding:3px 12px">${rarity.name}</span>
+        </div>
+        <div class="erm-pet-name">${pet.name}</div>
+        <div class="erm-buffs">${buffLines}</div>
+        ${adoptArea}
+      </div>`;
+    firstRender = false;
+
+    modal.querySelector('#erm-self-feed')?.addEventListener('click', () => { selfFeedMode = true; render(); });
+    modal.querySelector('#erm-self-cancel')?.addEventListener('click', () => { selfFeedMode = false; render(); });
+
+    modal.querySelectorAll('#erm-food-grid .food-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const cropId = chip.dataset.crop;
+        if (!G.inventory[cropId] || G.inventory[cropId] < 10) { showToast('需要 10 個相同作物！'); return; }
+        G.inventory[cropId] -= 10;
+        if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
+        fed = true; selfFeedMode = false;
+        SFX.feedPet();
+        const isFav = cropId === pet.favCrop;
+        showToast(isFav ? `${pet.emoji} ${pet.name} 最喜歡吃這個！` : `${pet.emoji} ${pet.name} 吃得很開心！`, 2500);
+        save(); renderAll(); render();
+      });
+    });
+
+    modal.querySelector('#erm-feed')?.addEventListener('click', () => {
+      if (G.money < feedCost) { SFX.error(); showToast('💰 金幣不足，無法餵養！'); return; }
+      G.money -= feedCost;
+      fed = true;
+      SFX.eggFeed();
+      save(); renderAll(); render();
+    });
+
+    modal.querySelector('#erm-adopt')?.addEventListener('click', () => {
+      if (!G.ownedPets) G.ownedPets = [];
+      if (G.ownedPets.length >= 5) { showToast('🏡 農場已滿！'); return; }
+      G.ownedPets.push(pet.id);
+      reapplyBuffs();
+      SFX.adopt();
+      showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 3000);
+      save(); renderAll(); modal.remove();
+    });
+
+    modal.querySelector('#erm-release')?.addEventListener('click', () => {
+      showToast(`🌿 ${pet.emoji} ${pet.name} 放生了...`, 2000);
+      modal.remove();
+    });
+
+    modal.querySelector('#erm-ok')?.addEventListener('click', () => modal.remove());
+  }
+
+  render();
+}
+
+function showEggMultiResultModal(results) {
+  document.getElementById('egg-multi-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'egg-multi-modal';
+  document.body.appendChild(modal);
+
+  const fedSet      = new Set();
+  const adoptedSet  = new Set();
+  const releasedSet = new Set();
+  let   selfFeedIdx = -1;
+
+  function render() {
+    const adoptedCount = adoptedSet.size;
+    const slotsLeft    = Math.max(0, 5 - (G.ownedPets || []).length - adoptedCount);
+
+    const cardsHtml = results.map(({ pet, grade, mythicalFallback }, i) => {
+      const rarity     = RARITIES[grade];
+      const isOwned    = (G.ownedPets || []).includes(pet.id);
+      const isAdopted  = adoptedSet.has(i);
+      const isReleased = releasedSet.has(i);
+      const isFed      = fedSet.has(i);
+      const feedCost   = EGG_FEED_COST[grade];
+
+      const buffLines = [pet.buff, pet.buff2, pet.buff3]
+        .filter(Boolean)
+        .map(b => `<span class="emr-buff-tag">${b.icon} ${b.label}</span>`)
+        .join('');
+
+      const mythBadge = mythicalFallback ? '<span class="emr-myth-note">傳奇替代</span>' : '';
+
+      let actionHtml;
+      if (isOwned || isAdopted) {
+        actionHtml = `<div class="emr-status-tag owned">🏡 已收留</div>`;
+      } else if (isReleased) {
+        actionHtml = `<div class="emr-status-tag released">🌿 放生</div>`;
+      } else if (isFed) {
+        actionHtml = slotsLeft <= 0
+          ? `<div class="emr-status-tag full">農場已滿</div>`
+          : `<button class="emr-adopt-btn" data-idx="${i}">🏠 收留</button>`;
+      } else if (selfFeedIdx === i) {
+        const allItems = Object.entries(G.inventory);
+        const eligible = pet.foodRarities
+          ? allItems.filter(([cid, cnt]) => pet.foodRarities.includes(CROPS[cid].rarity) && cnt >= 10)
+          : allItems.filter(([, cnt]) => cnt >= 10);
+        if (!eligible.length) {
+          actionHtml = `
+            <div class="emr-pick-title" style="color:#e53935">作物不足</div>
+            <button class="emr-skip-btn" data-selfcancel="${i}">取消</button>`;
+        } else {
+          const chips = eligible.map(([cid, cnt]) => {
+            const c = CROPS[cid];
+            const fav = cid === pet.favCrop;
+            return `<button class="emr-pick-chip${fav ? ' fav' : ''}" data-idx="${i}" data-crop="${cid}">${c.emoji}×${cnt}${fav ? '★' : ''}</button>`;
+          }).join('');
+          actionHtml = `
+            <div class="emr-pick-title">×10</div>
+            <div class="emr-pick-chips">${chips}</div>
+            <button class="emr-skip-btn" data-selfcancel="${i}">取消</button>`;
+        }
+      } else {
+        actionHtml = `
+          <button class="emr-self-feed-btn" data-idx="${i}">🌾 自己餵</button>
+          <button class="emr-feed-btn" data-idx="${i}">🍖 ${feedCost.toLocaleString()}💰</button>
+          <button class="emr-skip-btn" data-idx="${i}">🌿 放生</button>`;
+      }
+
+      return `
+        <div class="emr-card grade-${grade}${isAdopted || isReleased ? ' emr-dim' : ''}">
+          <span class="emr-card-emoji">${pet.emoji}</span>
+          <div class="emr-card-info">
+            <div class="emr-card-name">
+              <span class="rarity-badge" style="color:${rarity.badgeColor};background:${rarity.badgeBg};font-size:10px;padding:1px 7px;margin-right:4px">${rarity.name}</span>
+              ${pet.name}${mythBadge}
+            </div>
+            <div class="emr-card-buffs">${buffLines}</div>
+          </div>
+          <div class="emr-card-action">${actionHtml}</div>
+        </div>`;
+    }).join('');
+
+    modal.innerHTML = `
+      <div class="emr-overlay">
+        <div class="emr-box">
+          <div class="emr-header">🥚 10連抽結果</div>
+          <div class="emr-slots">農場空位：${slotsLeft} 格</div>
+          <div class="emr-list">${cardsHtml}</div>
+          <button class="emr-close-btn" id="emr-close">完成</button>
+        </div>
+      </div>`;
+
+    modal.querySelectorAll('.emr-self-feed-btn').forEach(btn => {
+      btn.addEventListener('click', () => { selfFeedIdx = parseInt(btn.dataset.idx); render(); });
+    });
+
+    modal.querySelectorAll('.emr-pick-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const idx    = parseInt(chip.dataset.idx);
+        const cropId = chip.dataset.crop;
+        if (!G.inventory[cropId] || G.inventory[cropId] < 10) { showToast('需要 10 個相同作物！'); return; }
+        G.inventory[cropId] -= 10;
+        if (G.inventory[cropId] <= 0) delete G.inventory[cropId];
+        fedSet.add(idx); selfFeedIdx = -1;
+        SFX.feedPet();
+        save(); renderAll(); render();
+      });
+    });
+
+    modal.querySelectorAll('[data-selfcancel]').forEach(btn => {
+      btn.addEventListener('click', () => { selfFeedIdx = -1; render(); });
+    });
+
+    modal.querySelectorAll('.emr-feed-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx  = parseInt(btn.dataset.idx);
+        const cost = EGG_FEED_COST[results[idx].grade];
+        if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+        G.money -= cost;
+        fedSet.add(idx);
+        SFX.eggFeed();
+        save(); renderAll(); render();
+      });
+    });
+
+    modal.querySelectorAll('.emr-adopt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const { pet } = results[idx];
+        if (!G.ownedPets) G.ownedPets = [];
+        if (G.ownedPets.length + adoptedSet.size >= 5) { showToast('🏡 農場已滿！'); return; }
+        G.ownedPets.push(pet.id);
+        adoptedSet.add(idx);
+        reapplyBuffs();
+        SFX.adopt();
+        showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 2000);
+        save(); renderAll(); render();
+      });
+    });
+
+    modal.querySelectorAll('.emr-skip-btn').forEach(btn => {
+      if (btn.dataset.selfcancel !== undefined) return;
+      btn.addEventListener('click', () => { releasedSet.add(parseInt(btn.dataset.idx)); render(); });
+    });
+
+    modal.querySelector('#emr-close').addEventListener('click', () => modal.remove());
+  }
+
+  render();
 }
 
 // ══════════════════════════════════════════
@@ -2307,12 +4220,74 @@ function bindEvents() {
 
   document.addEventListener('mouseup', () => { isHolding = false; });
 
+  // Touch interaction — drag to plant / water / harvest
+  // handleCell (→ renderAll) runs inside rAF, never inside a touch event handler.
+  // This prevents iOS Safari from firing touchcancel on DOM rebuild and killing
+  // the touchmove listener mid-gesture.
+  let touchPos       = null;   // {x, y} — updated by touchmove only
+  let lastTouchCell  = -1;
+  let touchRAF       = 0;
+  const touchFollower = document.getElementById('touch-seed-follow');
+
+  function touchPoll() {
+    if (!touchPos) { touchRAF = 0; return; }
+    touchFollower.style.left = touchPos.x + 'px';
+    touchFollower.style.top  = touchPos.y + 'px';
+    const el   = document.elementFromPoint(touchPos.x, touchPos.y);
+    const cell = el?.closest('.plot');
+    if (cell) {
+      const idx = +cell.dataset.idx;
+      if (idx !== lastTouchCell) {
+        lastTouchCell = idx;
+        handleCell(idx);   // renderAll() is safe here — outside any touch handler
+      }
+    }
+    touchRAF = requestAnimationFrame(touchPoll);
+  }
+
+  function onTouchMove(e) {
+    e.preventDefault();        // block page scroll during farm interaction
+    const t = e.touches[0];
+    touchPos = { x: t.clientX, y: t.clientY };
+  }
+
+  function onTouchStop() {
+    cancelAnimationFrame(touchRAF);
+    touchRAF      = 0;
+    touchPos      = null;
+    lastTouchCell = -1;
+    touchFollower.style.display = 'none';
+    document.removeEventListener('touchmove',   onTouchMove);
+    document.removeEventListener('touchend',    onTouchStop);
+    document.removeEventListener('touchcancel', onTouchStop);
+  }
+
+  farmGrid.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t     = e.touches[0];
+    const emoji = G.mode === 'watering'                   ? '🪣'
+                : G.mode === 'harvest'                    ? '🌾'
+                : (G.mode === 'normal' && G.selectedSeed) ? CROPS[G.selectedSeed].emoji
+                : null;
+    if (emoji) {
+      touchFollower.textContent   = emoji;
+      touchFollower.style.left    = t.clientX + 'px';
+      touchFollower.style.top     = t.clientY + 'px';
+      touchFollower.style.display = 'block';
+    }
+    touchPos      = { x: t.clientX, y: t.clientY };
+    lastTouchCell = -1;
+    document.addEventListener('touchmove',   onTouchMove,  { passive: false });
+    document.addEventListener('touchend',    onTouchStop);
+    document.addEventListener('touchcancel', onTouchStop);
+    if (!touchRAF) touchRAF = requestAnimationFrame(touchPoll);
+  }, { passive: false });
+
   // Panel tabs
   document.getElementById('tab-nav').addEventListener('click', e => {
     const btn = e.target.closest('.tab-btn');
     if (!btn) return;
     if (btn.dataset.tab === 'end') { endDay(); return; }
-    if (btn.dataset.tab === 'pet') { openPetScreen(); return; }
     G.activeTab = btn.dataset.tab;
     renderPanel();
   });
@@ -2324,6 +4299,8 @@ function bindEvents() {
 
   // Pet screen
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
+  document.getElementById('petshop-btn').addEventListener('click', () => { G.activeTab = 'petshop'; renderPanel(); });
+  document.getElementById('enchant-btn').addEventListener('click', () => { G.activeTab = 'enchant'; renderPanel(); });
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
 }
