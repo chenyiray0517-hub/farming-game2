@@ -348,6 +348,136 @@ function showResetConfirm() {
   document.getElementById('rcm-confirm').onclick = () => { modal.remove(); resetGame(); };
 }
 
+// ── Save Slots ─────────────────────────────────────────────────────────────
+const SLOT_KEY = n => `farmGame_slot_${n}`;
+
+function getSlotData(n) {
+  try { const raw = localStorage.getItem(SLOT_KEY(n)); return raw ? JSON.parse(raw) : null; }
+  catch(_) { return null; }
+}
+
+function saveToSlot(n) {
+  const fmt = new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  try {
+    localStorage.setItem(SLOT_KEY(n), JSON.stringify({
+      state: JSON.stringify(G), day: G.day, level: G.level, money: G.money, savedAt: fmt,
+    }));
+  } catch(_) {}
+  showToast(`✅ 已存入第 ${n} 格`, 1800);
+  renderSaveModal();
+}
+
+function loadFromSlot(n) {
+  const slot = getSlotData(n);
+  if (!slot) return;
+  try {
+    G = Object.assign(DEFAULT_STATE(), JSON.parse(slot.state));
+    G.grid.forEach(p => {
+      if (p.watered === undefined) p.watered = false;
+      if (p.dryDays === undefined) p.dryDays = 0;
+    });
+    G.feedingPetIdx = -1; G.viewingPetIdx = -1; G.viewingOwnedId = null;
+    if (!G.feedInventory) G.feedInventory = {};
+    if (!G.petFeedBoosts) G.petFeedBoosts = {};
+    if (!G.petFeedCounts) G.petFeedCounts = {};
+    reapplyBuffs();
+    save();
+    document.getElementById('save-slots-modal')?.remove();
+    renderAll();
+    showToast(`✅ 第 ${n} 格存檔已載入`, 2500);
+  } catch(_) { showToast('載入失敗'); }
+}
+
+function deleteSlot(n) {
+  localStorage.removeItem(SLOT_KEY(n));
+  showToast(`🗑️ 已刪除第 ${n} 格`, 1500);
+  renderSaveModal();
+}
+
+function showConfirm(title, desc, confirmLabel, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'generic-confirm-overlay';
+  overlay.innerHTML = `
+    <div class="rcm-box">
+      <div class="rcm-title">${title}</div>
+      ${desc ? `<div class="rcm-desc">${desc}</div>` : ''}
+      <div class="rcm-actions">
+        <button class="rcm-cancel _gc">取消</button>
+        <button class="rcm-confirm _gc">${confirmLabel}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelectorAll('._gc')[0].onclick = () => overlay.remove();
+  overlay.querySelectorAll('._gc')[1].onclick = () => { overlay.remove(); onConfirm(); };
+}
+
+function openSaveModal() {
+  let modal = document.getElementById('save-slots-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'save-slots-modal';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+  renderSaveModal();
+}
+
+function renderSaveModal() {
+  const modal = document.getElementById('save-slots-modal');
+  if (!modal) return;
+  let slotsHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const slot = getSlotData(i);
+    slotsHTML += slot
+      ? `<div class="ssm-slot filled">
+           <div class="ssm-slot-no">第 ${i} 格</div>
+           <div class="ssm-slot-info">
+             <div class="ssm-slot-main">第 ${slot.day} 天・Lv.${slot.level}・💰${slot.money}</div>
+             <div class="ssm-slot-time">${slot.savedAt}</div>
+           </div>
+           <div class="ssm-slot-btns">
+             <button class="ssm-btn ssm-save" data-n="${i}">覆蓋</button>
+             <button class="ssm-btn ssm-load" data-n="${i}">讀取</button>
+             <button class="ssm-btn ssm-del"  data-n="${i}">🗑️</button>
+           </div>
+         </div>`
+      : `<div class="ssm-slot empty">
+           <div class="ssm-slot-no">第 ${i} 格</div>
+           <div class="ssm-slot-empty">— 空槽 —</div>
+           <div class="ssm-slot-btns">
+             <button class="ssm-btn ssm-save" data-n="${i}">存入</button>
+           </div>
+         </div>`;
+  }
+  modal.innerHTML = `
+    <div class="ssm-box">
+      <div class="ssm-title">💾 存檔管理</div>
+      <div class="ssm-list">${slotsHTML}</div>
+      <button id="ssm-close" class="ssm-close-btn">關閉</button>
+    </div>`;
+  modal.querySelector('#ssm-close').addEventListener('click', () => modal.remove());
+  modal.querySelectorAll('.ssm-save').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.n);
+      if (getSlotData(n)) {
+        showConfirm(`覆蓋第 ${n} 格存檔？`, '原有存檔將被取代', '確認覆蓋', () => saveToSlot(n));
+      } else {
+        saveToSlot(n);
+      }
+    });
+  });
+  modal.querySelectorAll('.ssm-load').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const n = parseInt(btn.dataset.n);
+      showConfirm(`讀取第 ${n} 格存檔？`, '目前未儲存的進度將會消失', '確認讀取', () => loadFromSlot(n));
+    });
+  });
+  modal.querySelectorAll('.ssm-del').forEach(btn => {
+    btn.addEventListener('click', () => deleteSlot(parseInt(btn.dataset.n)));
+  });
+}
+
 function load() {
   try {
     const raw = localStorage.getItem('farmGame_v2');
@@ -633,6 +763,9 @@ function renderTasks(el) {
     <div class="task-section-title" style="margin-top:14px">🏆 成就</div>
     ${taskHTML(makeAchievements(), G.achievementsDone)}
     ${backupHTML}
+    <div class="save-slots-trigger">
+      <button id="open-save-btn" class="open-save-btn">💾 存檔管理</button>
+    </div>
     <div class="reset-section">
       <button id="reset-game-btn" class="reset-game-btn">🗑️ 重置遊戲</button>
     </div>`;
@@ -640,6 +773,7 @@ function renderTasks(el) {
   if (hasBackup()) {
     el.querySelector('#load-backup-btn').addEventListener('click', loadBackup);
   }
+  el.querySelector('#open-save-btn').addEventListener('click', openSaveModal);
   el.querySelector('#reset-game-btn').addEventListener('click', showResetConfirm);
 }
 
