@@ -3340,9 +3340,21 @@ function releasePet(petId) {
 }
 
 function generateDailyPets() {
-  const shuffled = [...PET_TYPES].sort(() => Math.random() - 0.5);
-  G.dailyPets = shuffled.slice(0, 3).map(p => ({ ...p, fed: false, happiness: 0 }));
-  reapplyBuffs(); // owned pets keep their passive buffs; daily pets start unfed
+  const GRADE_W = { common: 40, good: 30, premium: 15, legendary: 5 };
+  function weightedPick(pool) {
+    const total = pool.reduce((s, p) => s + (GRADE_W[p.grade] || 10), 0);
+    let r = Math.random() * total;
+    for (const p of pool) { r -= GRADE_W[p.grade] || 10; if (r <= 0) return p; }
+    return pool[pool.length - 1];
+  }
+  const pool = [...PET_TYPES];
+  const picked = [];
+  for (let i = 0; i < 3; i++) {
+    const p = weightedPick(pool.filter(x => !picked.includes(x)));
+    picked.push(p);
+  }
+  G.dailyPets = picked.map(p => ({ ...p, fed: false, happiness: 0 }));
+  reapplyBuffs();
 }
 
 function openPetScreen() {
