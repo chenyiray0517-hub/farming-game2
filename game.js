@@ -150,7 +150,6 @@ function xpNeeded(level) { return level * 150 + 50; }
 // ══════════════════════════════════════════
 
 let sfxMuted        = localStorage.getItem('farm_sfx_muted') === '1';
-let isTouchPlanting = false;
 
 const SFX = (() => {
   let ctx = null;
@@ -620,11 +619,6 @@ function renderGrid() {
       cell.textContent = '🥀';
       cell.title = '點擊清除枯死的植物';
 
-    } else if (plot.state === 'empty' && isTouchPlanting && G.selectedSeed) {
-      const hint = document.createElement('span');
-      hint.className = 'seed-hint';
-      hint.textContent = CROPS[G.selectedSeed].emoji;
-      cell.appendChild(hint);
     }
 
     grid.appendChild(cell);
@@ -1932,7 +1926,7 @@ function bindEvents() {
 
   document.addEventListener('mouseup', () => { isHolding = false; });
 
-  // Touch planting — press to show floating seed, drag to plant
+  // Touch interaction — drag to plant / water / harvest (mirrors mouse drag)
   let lastTouchCellIdx = -1;
   const touchFollower = document.getElementById('touch-seed-follow');
 
@@ -1941,45 +1935,28 @@ function bindEvents() {
     return el?.closest('.plot');
   }
 
-  function enterTouchPlanting() {
-    if (!G.selectedSeed || G.mode !== 'normal') return;
-    isTouchPlanting = true;
-    farmGrid.classList.add('touch-planting');
-    renderFarm();
-  }
-
-  function moveTouchFollower(touch) {
-    touchFollower.style.left = touch.clientX + 'px';
-    touchFollower.style.top  = touch.clientY + 'px';
-  }
-
-  function exitTouchPlanting() {
-    isTouchPlanting = false;
-    farmGrid.classList.remove('touch-planting');
-    touchFollower.style.display = 'none';
-    renderFarm();
-    lastTouchCellIdx = -1;
-  }
-
   farmGrid.addEventListener('touchstart', e => {
     e.preventDefault();
     const touch = e.touches[0];
-    const cell = touchCellFromPoint(touch);
+    const cell  = touchCellFromPoint(touch);
     if (!cell) return;
-    enterTouchPlanting();
-    if (isTouchPlanting) {
-      touchFollower.textContent = CROPS[G.selectedSeed].emoji;
-      moveTouchFollower(touch);
-      touchFollower.style.display = 'block';
-    }
     lastTouchCellIdx = parseInt(cell.dataset.idx);
+    if (G.mode === 'normal' && G.selectedSeed) {
+      touchFollower.textContent    = CROPS[G.selectedSeed].emoji;
+      touchFollower.style.left     = touch.clientX + 'px';
+      touchFollower.style.top      = touch.clientY + 'px';
+      touchFollower.style.display  = 'block';
+    }
     handleCell(lastTouchCellIdx);
   }, { passive: false });
 
   farmGrid.addEventListener('touchmove', e => {
     e.preventDefault();
     const touch = e.touches[0];
-    moveTouchFollower(touch);
+    if (touchFollower.style.display === 'block') {
+      touchFollower.style.left = touch.clientX + 'px';
+      touchFollower.style.top  = touch.clientY + 'px';
+    }
     const cell = touchCellFromPoint(touch);
     if (!cell) return;
     const idx = parseInt(cell.dataset.idx);
@@ -1988,8 +1965,9 @@ function bindEvents() {
     handleCell(idx);
   }, { passive: false });
 
-  farmGrid.addEventListener('touchend',    exitTouchPlanting);
-  farmGrid.addEventListener('touchcancel', exitTouchPlanting);
+  const endTouch = () => { touchFollower.style.display = 'none'; lastTouchCellIdx = -1; };
+  farmGrid.addEventListener('touchend',    endTouch);
+  farmGrid.addEventListener('touchcancel', endTouch);
 
   // Panel tabs
   document.getElementById('tab-nav').addEventListener('click', e => {
