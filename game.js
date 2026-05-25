@@ -1249,7 +1249,7 @@ function releasePet(petId) {
 }
 
 function generateDailyPets() {
-  const GRADE_W = { common: 40, good: 30, premium: 15, legendary: 5 };
+  const GRADE_W = { common: 40, good: 30, premium: 15, legendary: 1 };
   function weightedPick(pool) {
     const total = pool.reduce((s, p) => s + (GRADE_W[p.grade] || 10), 0);
     let r = Math.random() * total;
