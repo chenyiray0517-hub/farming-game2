@@ -36,6 +36,12 @@ const CROPS = {
   lotus:       { id: 'lotus',       name: '靈蓮',     emoji: '🪷', cost: 90,  sell: 252, days: 27, xp: 85,  minLevel: 150, seasons: [0, 1, 2], rarity: 'legendary' },
   pineapple:   { id: 'pineapple',   name: '龍息果',   emoji: '🍍', cost: 110, sell: 308, days: 31, xp: 105, minLevel: 175, seasons: [1, 3],    rarity: 'legendary' },
   rose:        { id: 'rose',        name: '帝王薔薇', emoji: '🌹', cost: 135, sell: 378, days: 35, xp: 130, minLevel: 200, seasons: [0, 2],    rarity: 'legendary' },
+  // ── 神話 ──────────────────────────────────
+  stargrain:   { id: 'stargrain',   name: '星辰穗',   emoji: '🌻', cost: 165, sell: 462, days: 40, xp: 160, minLevel: 220, seasons: [0, 1],       rarity: 'mythical' },
+  netherlotus: { id: 'netherlotus', name: '冥界蓮',   emoji: '🌺', cost: 200, sell: 560, days: 47, xp: 195, minLevel: 240, seasons: [2, 3],       rarity: 'mythical' },
+  chaosroot:   { id: 'chaosroot',   name: '混沌根',   emoji: '🍋', cost: 245, sell: 686, days: 55, xp: 240, minLevel: 260, seasons: [0, 2],       rarity: 'mythical' },
+  voidfruit:   { id: 'voidfruit',   name: '虛空果',   emoji: '🍊', cost: 300, sell: 840, days: 64, xp: 295, minLevel: 280, seasons: [1, 3],       rarity: 'mythical' },
+  primordia:   { id: 'primordia',   name: '太初花',   emoji: '🪻', cost: 365, sell: 1022, days: 75, xp: 360, minLevel: 300, seasons: [0, 1, 2, 3], rarity: 'mythical' },
 };
 
 const PET_TYPES = [
