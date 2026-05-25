@@ -345,6 +345,7 @@ body.harvest-mode  * { cursor: none !important; }
 
 .seed-prices { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; gap: 1px; }
 .seed-cost { color: #e53935; font-weight: 600; }
+.seed-cost.discounted s { color: #aaa; font-weight: 400; font-size: 0.85em; }
 .seed-sell { color: #43a047; font-weight: 600; }
 .lock-label { font-size: 10px; color: #aaa; }
 

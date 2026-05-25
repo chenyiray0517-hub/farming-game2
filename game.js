@@ -654,11 +654,18 @@ function renderShop(el) {
     html += `<div class="rarity-section-title" style="color:${r.color};border-color:${r.borderColor}">${r.name}</div>`;
 
     crops.forEach(crop => {
-      const locked      = G.level < crop.minLevel;
-      const selected    = G.selectedSeed === crop.id;
-      const inSeason    = crop.seasons.includes(G.season);
-      const seasonIcons = crop.seasons.map(s => SEASON_ICONS[s]).join('');
+      const locked        = G.level < crop.minLevel;
+      const selected      = G.selectedSeed === crop.id;
+      const inSeason      = crop.seasons.includes(G.season);
+      const seasonIcons   = crop.seasons.map(s => SEASON_ICONS[s]).join('');
       const cls = `seed-card rarity-${rarityKey}${locked ? ' locked' : ''}${selected ? ' selected' : ''}`;
+      const discount      = G.activeBuffs.shopDiscount;
+      const displayCost   = discount > 0
+        ? Math.max(1, Math.ceil(crop.cost * (1 - discount)))
+        : crop.cost;
+      const costHTML      = discount > 0
+        ? `<span class="seed-cost discounted"><s>${crop.cost}</s> ${displayCost} 💰</span>`
+        : `<span class="seed-cost">-${crop.cost} 💰</span>`;
 
       html += `
         <div class="${cls}" data-crop="${crop.id}">
@@ -674,7 +681,7 @@ function renderShop(el) {
           <div class="seed-prices">
             ${locked
               ? `<span class="lock-label">🔒 Lv.${crop.minLevel}</span>`
-              : `<span class="seed-cost">-${crop.cost} 💰</span><span class="seed-sell">+${crop.sell} 💰</span>`}
+              : `${costHTML}<span class="seed-sell">+${crop.sell} 💰</span>`}
           </div>
         </div>`;
     });
@@ -785,7 +792,7 @@ function plantSeed(idx) {
   if (plot.state !== 'empty') return;
 
   const crop = CROPS[G.selectedSeed];
-  const cost = Math.max(1, Math.round(crop.cost * (1 - G.activeBuffs.shopDiscount)));
+  const cost = Math.max(1, Math.ceil(crop.cost * (1 - G.activeBuffs.shopDiscount)));
   if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
 
   SFX.plant();
@@ -1162,6 +1169,9 @@ function reapplyBuffs() {
       G.activeBuffs[type] = (G.activeBuffs[type] || 0) + val;
     });
   });
+
+  // Cap shopDiscount at 90% so cost never drops to 0 or negative
+  G.activeBuffs.shopDiscount = Math.min(0.9, G.activeBuffs.shopDiscount);
 }
 
 function upgradeByPetId(petId) {
