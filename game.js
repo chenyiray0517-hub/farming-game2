@@ -1998,35 +1998,46 @@ function bindEvents() {
 
   document.addEventListener('mouseup', () => { isHolding = false; });
 
-  // Touch interaction — drag to plant / water / harvest (mirrors mouse drag)
-  // touchmove / touchend are attached to document to survive renderAll() DOM rebuilds
-  let lastTouchCellIdx = -1;
-  const touchFollower  = document.getElementById('touch-seed-follow');
+  // Touch interaction — drag to plant / water / harvest
+  // handleCell (→ renderAll) runs inside rAF, never inside a touch event handler.
+  // This prevents iOS Safari from firing touchcancel on DOM rebuild and killing
+  // the touchmove listener mid-gesture.
+  let touchPos       = null;   // {x, y} — updated by touchmove only
+  let lastTouchCell  = -1;
+  let touchRAF       = 0;
+  const touchFollower = document.getElementById('touch-seed-follow');
 
-  function plotFromPoint(clientX, clientY) {
-    const el = document.elementFromPoint(clientX, clientY);
-    return el?.closest('.plot');
+  function touchPoll() {
+    if (!touchPos) { touchRAF = 0; return; }
+    touchFollower.style.left = touchPos.x + 'px';
+    touchFollower.style.top  = touchPos.y + 'px';
+    const el   = document.elementFromPoint(touchPos.x, touchPos.y);
+    const cell = el?.closest('.plot');
+    if (cell) {
+      const idx = +cell.dataset.idx;
+      if (idx !== lastTouchCell) {
+        lastTouchCell = idx;
+        handleCell(idx);   // renderAll() is safe here — outside any touch handler
+      }
+    }
+    touchRAF = requestAnimationFrame(touchPoll);
   }
 
-  function onFarmTouchMove(e) {
-    e.preventDefault();
+  function onTouchMove(e) {
+    e.preventDefault();        // block page scroll during farm interaction
     const t = e.touches[0];
-    touchFollower.style.left = t.clientX + 'px';
-    touchFollower.style.top  = t.clientY + 'px';
-    const cell = plotFromPoint(t.clientX, t.clientY);
-    if (!cell) return;
-    const idx = parseInt(cell.dataset.idx);
-    if (idx === lastTouchCellIdx) return;
-    lastTouchCellIdx = idx;
-    handleCell(idx);
+    touchPos = { x: t.clientX, y: t.clientY };
   }
 
-  function onFarmTouchEnd() {
+  function onTouchStop() {
+    cancelAnimationFrame(touchRAF);
+    touchRAF      = 0;
+    touchPos      = null;
+    lastTouchCell = -1;
     touchFollower.style.display = 'none';
-    lastTouchCellIdx = -1;
-    document.removeEventListener('touchmove',   onFarmTouchMove);
-    document.removeEventListener('touchend',    onFarmTouchEnd);
-    document.removeEventListener('touchcancel', onFarmTouchEnd);
+    document.removeEventListener('touchmove',   onTouchMove);
+    document.removeEventListener('touchend',    onTouchStop);
+    document.removeEventListener('touchcancel', onTouchStop);
   }
 
   farmGrid.addEventListener('touchstart', e => {
@@ -2042,13 +2053,12 @@ function bindEvents() {
       touchFollower.style.top     = t.clientY + 'px';
       touchFollower.style.display = 'block';
     }
-    document.addEventListener('touchmove',   onFarmTouchMove, { passive: false });
-    document.addEventListener('touchend',    onFarmTouchEnd);
-    document.addEventListener('touchcancel', onFarmTouchEnd);
-    const cell = plotFromPoint(t.clientX, t.clientY);
-    if (!cell) return;
-    lastTouchCellIdx = parseInt(cell.dataset.idx);
-    handleCell(lastTouchCellIdx);
+    touchPos      = { x: t.clientX, y: t.clientY };
+    lastTouchCell = -1;
+    document.addEventListener('touchmove',   onTouchMove,  { passive: false });
+    document.addEventListener('touchend',    onTouchStop);
+    document.addEventListener('touchcancel', onTouchStop);
+    if (!touchRAF) touchRAF = requestAnimationFrame(touchPoll);
   }, { passive: false });
 
   // Panel tabs
