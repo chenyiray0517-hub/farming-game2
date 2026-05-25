@@ -1731,6 +1731,87 @@ body.harvest-mode  * { cursor: none !important; }
 }
 .rcm-confirm:hover { filter: brightness(1.1); }
 
+/* ── Pet Enchant Panel ── */
+.enchant-pool {
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 8px 10px 10px;
+  margin-bottom: 12px;
+}
+
+.enchant-pool-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  margin: 3px 2px 0;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 12px;
+  font-size: 11px;
+  color: #555;
+}
+
+.enchant-card {
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 2px solid #eee;
+}
+
+.enchant-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.enchant-pet-emoji { font-size: 26px; flex-shrink: 0; }
+
+.enchant-pet-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.enchant-pet-name { font-weight: 700; font-size: 13px; }
+.enchant-pet-lv   { font-size: 11px; color: var(--gold-dark); font-weight: 600; }
+
+.enchant-buff-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  border: 1.5px solid #eee;
+}
+
+.enchant-buff-row.locked   { opacity: 0.62; }
+.enchant-buff-row.enchanted { border-color: var(--gold); background: #fffdf0; }
+
+.enchant-row-icon  { font-size: 14px; flex-shrink: 0; }
+.enchant-row-label { flex: 1; font-size: 12px; color: #444; }
+.enchant-lock-tag  { font-size: 10px; color: #bbb; white-space: nowrap; flex-shrink: 0; }
+
+.enchant-btn {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #7b1fa2, #4a148c);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: filter 0.14s;
+  flex-shrink: 0;
+}
+.enchant-btn:hover { filter: brightness(1.18); }
+
+.owned-buff-enchanted { color: #e65100 !important; }
+
 /* ══ Responsive ══ */
 
 /* Medium screens: scale cells, panel fills remaining right space */

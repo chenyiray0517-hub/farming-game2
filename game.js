@@ -103,6 +103,14 @@ const PET_EGGS = [
   },
 ];
 
+const ENCHANT_OPTIONS = [
+  { type: 'xpBonus',     value: 0.25, icon: '⭐', label: '採收 XP +25%'       },
+  { type: 'sellBonus',   value: 0.20, icon: '💰', label: '販售收益 +20%'      },
+  { type: 'extraGrowth', value: 1,    icon: '🌱', label: '每天多成長 +1 天'   },
+  { type: 'noWither',    value: true, icon: '💧', label: '一天不澆水不會枯死'  },
+];
+const ENCHANT_COST = 10000;
+
 const EGG_FEED_COST = {
   common:    1000,
   good:      5000,
@@ -114,7 +122,7 @@ const EGG_FEED_COST = {
 const SEASONS       = ['春', '夏', '秋', '冬'];
 const SEASON_CLASSES = ['spring', 'summer', 'autumn', 'winter'];
 const SEASON_ICONS   = ['🌸', '☀️', '🍂', '❄️'];
-const SEASON_LENGTH  = 7;
+const SEASON_LENGTH  = 50;
 
 const WEATHERS = [
   { name: '晴天', icon: '☀️',  bonus: 0 },
@@ -252,6 +260,7 @@ const DEFAULT_STATE = () => ({
   feedInventory:  {},
   petFeedBoosts:  {},
   petFeedCounts:  {},
+  petEnchants:    {},
 });
 
 let G = DEFAULT_STATE();
@@ -320,6 +329,7 @@ function loadBackup() {
     if (!G.feedInventory) G.feedInventory = {};
     if (!G.petFeedBoosts) G.petFeedBoosts = {};
     if (!G.petFeedCounts) G.petFeedCounts = {};
+    if (!G.petEnchants)   G.petEnchants   = {};
     reapplyBuffs();
     localStorage.removeItem(BACKUP_KEY);
     save();
@@ -379,6 +389,7 @@ function loadFromSlot(n) {
     if (!G.feedInventory) G.feedInventory = {};
     if (!G.petFeedBoosts) G.petFeedBoosts = {};
     if (!G.petFeedCounts) G.petFeedCounts = {};
+    if (!G.petEnchants)   G.petEnchants   = {};
     reapplyBuffs();
     save();
     document.getElementById('save-slots-modal')?.remove();
@@ -494,6 +505,7 @@ function load() {
   if (!G.feedInventory) G.feedInventory = {};
   if (!G.petFeedBoosts) G.petFeedBoosts = {};
   if (!G.petFeedCounts) G.petFeedCounts = {};
+  if (!G.petEnchants)   G.petEnchants   = {};
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -633,6 +645,7 @@ function renderPanel() {
   if      (G.activeTab === 'shop')      renderShop(body);
   else if (G.activeTab === 'warehouse') renderWarehouse(body);
   else if (G.activeTab === 'tasks')     renderTasks(body);
+  else if (G.activeTab === 'enchant')   renderEnchant(body);
   else if (G.activeTab === 'petshop')   renderPetShop(body);
 }
 
@@ -1111,6 +1124,13 @@ function getPetLevel(petId) {
   return G.petLevels[petId] || 1;
 }
 
+function getPetEffBuff(petId, slot) {
+  const enc = (G.petEnchants || {})[petId];
+  if (enc && enc[slot]) return enc[slot];
+  const pt = PET_TYPES.find(p => p.id === petId);
+  return pt ? (pt[slot] || null) : null;
+}
+
 function scaledBuffValue(buff, level) {
   if (buff.type === 'noWither') return buff.value;
   return buff.value * (1 + 0.3 * (level - 1));
@@ -1149,8 +1169,10 @@ function reapplyBuffs() {
     if (!pet.fed) return;
     counted.add(pet.id);
     applyPetBuff(pet.id, pet.buff);
-    if (pet.buff2) applyPetBuff(pet.id, pet.buff2);
-    if (pet.buff3) applyPetBuff(pet.id, pet.buff3);
+    const db2 = getPetEffBuff(pet.id, 'buff2');
+    if (db2) applyPetBuff(pet.id, db2);
+    const db3 = getPetEffBuff(pet.id, 'buff3');
+    if (db3) applyPetBuff(pet.id, db3);
   });
 
   // Owned pets always provide passive buff (skip if already counted above)
@@ -1159,8 +1181,10 @@ function reapplyBuffs() {
       const pt = PET_TYPES.find(p => p.id === petId);
       if (pt) {
         applyPetBuff(petId, pt.buff);
-        if (pt.buff2) applyPetBuff(petId, pt.buff2);
-        if (pt.buff3) applyPetBuff(petId, pt.buff3);
+        const ob2 = getPetEffBuff(petId, 'buff2');
+        if (ob2) applyPetBuff(petId, ob2);
+        const ob3 = getPetEffBuff(petId, 'buff3');
+        if (ob3) applyPetBuff(petId, ob3);
       }
     }
     // Feed boosts are permanent upgrades — always apply for owned pets
@@ -1216,6 +1240,7 @@ function releasePet(petId) {
   const pt = PET_TYPES.find(p => p.id === petId);
   G.ownedPets = G.ownedPets.filter(id => id !== petId);
   if (G.viewingOwnedId === petId) G.viewingOwnedId = null;
+  if (G.petEnchants && G.petEnchants[petId]) delete G.petEnchants[petId];
   reapplyBuffs();
   showToast(`🌿 ${pt?.emoji || ''} ${pt?.name || ''} 已放生，祝牠一路順風！`, 3000);
   save();
@@ -1262,8 +1287,10 @@ function renderPetScreen() {
         const isMax    = lv >= 5;
         const eff      = scaledBuffValue(pet.buff, lv);
         const effLabel = formatBuffLabel(pet.buff, eff);
-        const eff2Label = pet.buff2 ? formatBuffLabel(pet.buff2, scaledBuffValue(pet.buff2, lv)) : null;
-        const eff3Label = pet.buff3 ? formatBuffLabel(pet.buff3, scaledBuffValue(pet.buff3, lv)) : null;
+        const petBuff2  = getPetEffBuff(pet.id, 'buff2');
+        const petBuff3  = getPetEffBuff(pet.id, 'buff3');
+        const eff2Label = petBuff2 ? formatBuffLabel(petBuff2, scaledBuffValue(petBuff2, lv)) : null;
+        const eff3Label = petBuff3 ? formatBuffLabel(petBuff3, scaledBuffValue(petBuff3, lv)) : null;
         const cost     = upgradeCost(lv);
         const isOwned  = (G.ownedPets || []).includes(pet.id);
         feedContent = `
@@ -1271,8 +1298,8 @@ function renderPetScreen() {
           <div class="pet-stat-panel">
             <div class="pet-stat-lv">⭐ Lv.${lv}</div>
             <div class="pet-stat-buff">${pet.buff.icon} ${effLabel}</div>
-            ${eff2Label ? `<div class="pet-stat-buff pet-stat-buff2">${pet.buff2.icon} ${eff2Label}</div>` : ''}
-            ${eff3Label ? `<div class="pet-stat-buff pet-stat-buff3">${pet.buff3.icon} ${eff3Label}</div>` : ''}
+            ${eff2Label ? `<div class="pet-stat-buff pet-stat-buff2">${petBuff2.icon} ${eff2Label}${(G.petEnchants||{})[pet.id]?.buff2 ? ' ✨' : ''}</div>` : ''}
+            ${eff3Label ? `<div class="pet-stat-buff pet-stat-buff3">${petBuff3.icon} ${eff3Label}${(G.petEnchants||{})[pet.id]?.buff3 ? ' ✨' : ''}</div>` : ''}
             ${isMax
               ? `<div class="pet-stat-maxlv">✨ 已達最高等級</div>`
               : `<div class="pet-stat-cost">升級費用：${cost} 💰</div>
@@ -1326,8 +1353,8 @@ function renderPetScreen() {
       <div class="pet-fav-food">喜歡：${favCrop ? favCrop.emoji + ' ' + favCrop.name : '?'}</div>
       ${pet.foodRarities ? `<div class="pet-food-restrict">🍽️ 只吃傳奇 / 神話作物</div>` : ''}
       <div class="pet-buff-tag${pet.fed ? ' active' : ''}">${pet.buff.icon} ${pet.buff.label}</div>
-      ${pet.buff2 ? `<div class="pet-buff-tag pet-buff2-tag${pet.fed ? ' active' : ''}">${pet.buff2.icon} ${pet.buff2.label}</div>` : ''}
-      ${pet.buff3 ? `<div class="pet-buff-tag pet-buff3-tag${pet.fed ? ' active' : ''}">${pet.buff3.icon} ${pet.buff3.label}</div>` : ''}
+      ${(() => { const e2 = getPetEffBuff(pet.id, 'buff2'); return e2 ? `<div class="pet-buff-tag pet-buff2-tag${pet.fed ? ' active' : ''}">${e2.icon} ${e2.label}${(G.petEnchants||{})[pet.id]?.buff2 ? ' ✨' : ''}</div>` : ''; })()}
+      ${(() => { const e3 = getPetEffBuff(pet.id, 'buff3'); return e3 ? `<div class="pet-buff-tag pet-buff3-tag${pet.fed ? ' active' : ''}">${e3.icon} ${e3.label}${(G.petEnchants||{})[pet.id]?.buff3 ? ' ✨' : ''}</div>` : ''; })()}
       <span class="pet-mood">${moodEmoji}</span>
       ${feedContent}`;
     list.appendChild(card);
@@ -1391,8 +1418,10 @@ function renderOwnedPets() {
     const isMax    = lv >= 5;
     const eff      = scaledBuffValue(pt.buff, lv);
     const effLabel = formatBuffLabel(pt.buff, eff);
-    const eff2Label = pt.buff2 ? formatBuffLabel(pt.buff2, scaledBuffValue(pt.buff2, lv)) : null;
-    const eff3Label = pt.buff3 ? formatBuffLabel(pt.buff3, scaledBuffValue(pt.buff3, lv)) : null;
+    const ownedBuff2 = getPetEffBuff(G.viewingOwnedId, 'buff2');
+    const ownedBuff3 = getPetEffBuff(G.viewingOwnedId, 'buff3');
+    const eff2Label  = ownedBuff2 ? formatBuffLabel(ownedBuff2, scaledBuffValue(ownedBuff2, lv)) : null;
+    const eff3Label  = ownedBuff3 ? formatBuffLabel(ownedBuff3, scaledBuffValue(ownedBuff3, lv)) : null;
     const cost     = upgradeCost(lv);
     const dg     = pt.grade || 'common';
     const dgInfo = RARITIES[dg];
@@ -1410,8 +1439,8 @@ function renderOwnedPets() {
           <div class="owned-detail-name">${pt.name} <span class="rarity-badge pet-grade-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span></div>
           <div class="owned-detail-lv">⭐ Lv.${lv}</div>
           <div class="owned-detail-buff">${pt.buff.icon} ${effLabel}</div>
-          ${eff2Label ? `<div class="owned-detail-buff">${pt.buff2.icon} ${eff2Label}</div>` : ''}
-          ${eff3Label ? `<div class="owned-detail-buff">${pt.buff3.icon} ${eff3Label}</div>` : ''}
+          ${eff2Label ? `<div class="owned-detail-buff${(G.petEnchants||{})[G.viewingOwnedId]?.buff2 ? ' owned-buff-enchanted' : ''}">${ownedBuff2.icon} ${eff2Label}${(G.petEnchants||{})[G.viewingOwnedId]?.buff2 ? ' ✨' : ''}</div>` : ''}
+          ${eff3Label ? `<div class="owned-detail-buff${(G.petEnchants||{})[G.viewingOwnedId]?.buff3 ? ' owned-buff-enchanted' : ''}">${ownedBuff3.icon} ${eff3Label}${(G.petEnchants||{})[G.viewingOwnedId]?.buff3 ? ' ✨' : ''}</div>` : ''}
           ${feedBoostLines}
         </div>
         <div class="owned-detail-actions">
@@ -1472,6 +1501,98 @@ function feedPet(petIdx, cropId) {
   save();
   renderPetScreen();
   renderAll(); // update buff strip + topbar
+}
+
+// ── Pet Enchant ───────────────────────────
+
+function enchantPet(petId, slot) {
+  if (G.money < ENCHANT_COST) {
+    SFX.error();
+    showToast(`💰 金幣不足！需要 ${ENCHANT_COST.toLocaleString()} 金幣`);
+    return;
+  }
+  const rolled = ENCHANT_OPTIONS[Math.floor(Math.random() * ENCHANT_OPTIONS.length)];
+  if (!G.petEnchants) G.petEnchants = {};
+  if (!G.petEnchants[petId]) G.petEnchants[petId] = {};
+  G.petEnchants[petId][slot] = { ...rolled };
+  G.money -= ENCHANT_COST;
+  reapplyBuffs();
+  SFX.gacha();
+  const pt = PET_TYPES.find(p => p.id === petId);
+  showToast(`✨ ${pt?.emoji || ''} ${pt?.name || ''} 附魔：${rolled.icon} ${rolled.label}！`, 3000);
+  save();
+  renderAll();
+}
+
+function renderEnchant(el) {
+  const owned = G.ownedPets || [];
+  if (!owned.length) {
+    el.innerHTML = `<div class="empty-msg">先收留寵物才能進行附魔 🔮<br>在寵物頁面餵食後點「收留牠」</div>`;
+    return;
+  }
+
+  let html = `
+    <div class="shop-hint">隨機更換寵物的副能力<br>每次費用 <b>${ENCHANT_COST.toLocaleString()} 💰</b></div>
+    <div class="enchant-pool">
+      <div class="section-title">可能的結果</div>
+      ${ENCHANT_OPTIONS.map(o => `<div class="enchant-pool-chip">${o.icon} ${o.label}</div>`).join('')}
+    </div>`;
+
+  owned.forEach(petId => {
+    const pt = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return;
+    const lv     = getPetLevel(petId);
+    const dg     = pt.grade || 'common';
+    const dgInfo = RARITIES[dg];
+    const enc    = (G.petEnchants || {})[petId] || {};
+
+    const eff2 = getPetEffBuff(petId, 'buff2');
+    const eff3 = getPetEffBuff(petId, 'buff3');
+    const hasNativeBuff3 = !!pt.buff3;
+
+    const primaryLabel = formatBuffLabel(pt.buff, scaledBuffValue(pt.buff, lv));
+
+    const b2Label = eff2 ? formatBuffLabel(eff2, scaledBuffValue(eff2, lv)) : '尚未附魔';
+    const b2Icon  = eff2 ? eff2.icon : '❓';
+
+    html += `
+      <div class="enchant-card">
+        <div class="enchant-card-head">
+          <span class="enchant-pet-emoji">${pt.emoji}</span>
+          <div class="enchant-pet-info">
+            <span class="enchant-pet-name">${pt.name}</span>
+            <span class="rarity-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span>
+            <span class="enchant-pet-lv">Lv.${lv}</span>
+          </div>
+        </div>
+        <div class="enchant-buff-row locked">
+          <span class="enchant-row-icon">${pt.buff.icon}</span>
+          <span class="enchant-row-label">${primaryLabel}</span>
+          <span class="enchant-lock-tag">🔒 主能力</span>
+        </div>
+        <div class="enchant-buff-row${enc.buff2 ? ' enchanted' : ''}">
+          <span class="enchant-row-icon">${b2Icon}</span>
+          <span class="enchant-row-label">${b2Label}${enc.buff2 ? ' ✨' : ''}</span>
+          <button class="enchant-btn" data-petid="${petId}" data-slot="buff2">🔮 附魔</button>
+        </div>`;
+
+    if (hasNativeBuff3) {
+      const b3Label = eff3 ? formatBuffLabel(eff3, scaledBuffValue(eff3, lv)) : '尚未附魔';
+      const b3Icon  = eff3 ? eff3.icon : '❓';
+      html += `
+        <div class="enchant-buff-row${enc.buff3 ? ' enchanted' : ''}">
+          <span class="enchant-row-icon">${b3Icon}</span>
+          <span class="enchant-row-label">${b3Label}${enc.buff3 ? ' ✨' : ''}</span>
+          <button class="enchant-btn" data-petid="${petId}" data-slot="buff3">🔮 附魔</button>
+        </div>`;
+    }
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.enchant-btn').forEach(btn => {
+    btn.addEventListener('click', () => enchantPet(btn.dataset.petid, btn.dataset.slot));
+  });
 }
 
 // ── Pet Shop ──────────────────────────────
