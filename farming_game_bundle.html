@@ -3285,8 +3285,8 @@ function reapplyBuffs() {
     });
   });
 
-  // Cap shopDiscount at 90% so cost never drops to 0 or negative
-  G.activeBuffs.shopDiscount = Math.min(0.9, G.activeBuffs.shopDiscount);
+  // Cap shopDiscount at 50%
+  G.activeBuffs.shopDiscount = Math.min(0.5, G.activeBuffs.shopDiscount);
 }
 
 function upgradeByPetId(petId) {
