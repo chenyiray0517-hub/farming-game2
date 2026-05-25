@@ -2168,66 +2168,78 @@ function bindEvents() {
   document.addEventListener('mouseup', () => { isHolding = false; });
 
   // Touch interaction — drag to plant / water / harvest
-  // handleCell (→ renderAll) runs inside rAF, never inside a touch event handler.
-  // This prevents iOS Safari from firing touchcancel on DOM rebuild and killing
-  // the touchmove listener mid-gesture.
-  let touchPos       = null;   // {x, y} — updated by touchmove only
-  let lastTouchCell  = -1;
-  let touchRAF       = 0;
+  // Follower position updates immediately in touchmove for zero-lag visual feedback.
+  // Cell detection is deferred to rAF so handleCell (→ renderAll) never runs
+  // inside a touch handler — prevents iOS Safari touchcancel on DOM mutation.
+  // touch-action:none on #farm-wrapper stops the browser intercepting the gesture
+  // as a scroll before JS can preventDefault it.
+  let lastTouchCell   = -1;
+  let pendingTouchPos = null;
+  let touchRAF        = 0;
   const touchFollower = document.getElementById('touch-seed-follow');
 
-  function touchPoll() {
-    if (!touchPos) { touchRAF = 0; return; }
-    touchFollower.style.left = touchPos.x + 'px';
-    touchFollower.style.top  = touchPos.y + 'px';
-    const el   = document.elementFromPoint(touchPos.x, touchPos.y);
+  function activeTouchEmoji() {
+    if (G.mode === 'watering') return '🪣';
+    if (G.mode === 'harvest')  return '🌾';
+    if (G.mode === 'normal' && G.selectedSeed) return CROPS[G.selectedSeed].emoji;
+    return null;
+  }
+
+  function touchFrame() {
+    touchRAF = 0;
+    if (!pendingTouchPos) return;
+    const { x, y } = pendingTouchPos;
+    pendingTouchPos = null;
+    const el   = document.elementFromPoint(x, y);
     const cell = el?.closest('.plot');
     if (cell) {
       const idx = +cell.dataset.idx;
       if (idx !== lastTouchCell) {
         lastTouchCell = idx;
-        handleCell(idx);   // renderAll() is safe here — outside any touch handler
+        handleCell(idx);
       }
     }
-    touchRAF = requestAnimationFrame(touchPoll);
   }
 
   function onTouchMove(e) {
-    e.preventDefault();        // block page scroll during farm interaction
+    e.preventDefault();
     const t = e.touches[0];
-    touchPos = { x: t.clientX, y: t.clientY };
+    // Update follower immediately — no rAF delay
+    touchFollower.style.left = t.clientX + 'px';
+    touchFollower.style.top  = t.clientY + 'px';
+    // Schedule cell detection for next frame (keeps DOM mutation out of touch handler)
+    pendingTouchPos = { x: t.clientX, y: t.clientY };
+    if (!touchRAF) touchRAF = requestAnimationFrame(touchFrame);
   }
 
   function onTouchStop() {
     cancelAnimationFrame(touchRAF);
-    touchRAF      = 0;
-    touchPos      = null;
-    lastTouchCell = -1;
+    touchRAF        = 0;
+    pendingTouchPos = null;
+    lastTouchCell   = -1;
     touchFollower.style.display = 'none';
     document.removeEventListener('touchmove',   onTouchMove);
     document.removeEventListener('touchend',    onTouchStop);
     document.removeEventListener('touchcancel', onTouchStop);
   }
 
-  farmGrid.addEventListener('touchstart', e => {
+  // Bind to farm-wrapper (covers the 14px padding around the grid too)
+  document.getElementById('farm-wrapper').addEventListener('touchstart', e => {
     e.preventDefault();
     const t     = e.touches[0];
-    const emoji = G.mode === 'watering'                   ? '🪣'
-                : G.mode === 'harvest'                    ? '🌾'
-                : (G.mode === 'normal' && G.selectedSeed) ? CROPS[G.selectedSeed].emoji
-                : null;
+    const emoji = activeTouchEmoji();
     if (emoji) {
       touchFollower.textContent   = emoji;
       touchFollower.style.left    = t.clientX + 'px';
       touchFollower.style.top     = t.clientY + 'px';
       touchFollower.style.display = 'block';
     }
-    touchPos      = { x: t.clientX, y: t.clientY };
-    lastTouchCell = -1;
+    lastTouchCell   = -1;
+    pendingTouchPos = { x: t.clientX, y: t.clientY };
+    if (!touchRAF) touchRAF = requestAnimationFrame(touchFrame);
     document.addEventListener('touchmove',   onTouchMove,  { passive: false });
     document.addEventListener('touchend',    onTouchStop);
     document.addEventListener('touchcancel', onTouchStop);
-    if (!touchRAF) touchRAF = requestAnimationFrame(touchPoll);
   }, { passive: false });
 
   // Panel tabs

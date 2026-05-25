@@ -138,6 +138,7 @@ body.harvest-mode  * { cursor: none !important; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  touch-action: none;
 }
 
 #farm-grid {
