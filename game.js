@@ -285,8 +285,67 @@ function makeAchievements() {
 //  SAVE / LOAD
 // ══════════════════════════════════════════
 
+const BACKUP_KEY = 'farmGame_v2_backup';
+
 function save() {
   try { localStorage.setItem('farmGame_v2', JSON.stringify(G)); } catch(_) {}
+}
+
+function hasBackup() {
+  return !!localStorage.getItem(BACKUP_KEY);
+}
+
+function resetGame() {
+  try { localStorage.setItem(BACKUP_KEY, JSON.stringify(G)); } catch(_) {}
+  localStorage.removeItem('farmGame_v2');
+  G = DEFAULT_STATE();
+  generateDailyPets();
+  save();
+  G.activeTab = 'tasks';
+  renderAll();
+  showToast('遊戲已重置，可在任務頁面載入舊存檔', 3500);
+}
+
+function loadBackup() {
+  try {
+    const raw = localStorage.getItem(BACKUP_KEY);
+    if (!raw) { showToast('找不到舊存檔'); return; }
+    G = Object.assign(DEFAULT_STATE(), JSON.parse(raw));
+    G.grid.forEach(p => {
+      if (p.watered === undefined) p.watered = false;
+      if (p.dryDays === undefined) p.dryDays = 0;
+    });
+    G.feedingPetIdx  = -1;
+    G.viewingPetIdx  = -1;
+    G.viewingOwnedId = null;
+    if (!G.feedInventory) G.feedInventory = {};
+    if (!G.petFeedBoosts) G.petFeedBoosts = {};
+    if (!G.petFeedCounts) G.petFeedCounts = {};
+    reapplyBuffs();
+    localStorage.removeItem(BACKUP_KEY);
+    save();
+    renderAll();
+    showToast('✅ 舊存檔已載入！', 2500);
+  } catch(_) { showToast('載入失敗'); }
+}
+
+function showResetConfirm() {
+  const modal = document.createElement('div');
+  modal.id = 'reset-confirm-modal';
+  modal.innerHTML = `
+    <div class="rcm-box">
+      <div class="rcm-icon">⚠️</div>
+      <div class="rcm-title">確定要重置遊戲？</div>
+      <div class="rcm-desc">所有進度、金幣、寵物都會消失<br>但可在任務頁面載入舊存檔</div>
+      <div class="rcm-actions">
+        <button id="rcm-cancel" class="rcm-cancel">取消</button>
+        <button id="rcm-confirm" class="rcm-confirm">確認重置</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('rcm-cancel').onclick  = () => modal.remove();
+  document.getElementById('rcm-confirm').onclick = () => { modal.remove(); resetGame(); };
 }
 
 function load() {
@@ -562,11 +621,26 @@ function renderTasks(el) {
     }).join('');
   }
 
+  const backupHTML = hasBackup() ? `
+    <div class="backup-restore-section">
+      <div class="backup-restore-label">📂 發現重置前的舊存檔</div>
+      <button id="load-backup-btn" class="load-backup-btn">⏪ 載入舊存檔</button>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="task-section-title">📅 今日任務</div>
     ${taskHTML(makeDailyTasks(), G.dailyTasksDone)}
     <div class="task-section-title" style="margin-top:14px">🏆 成就</div>
-    ${taskHTML(makeAchievements(), G.achievementsDone)}`;
+    ${taskHTML(makeAchievements(), G.achievementsDone)}
+    ${backupHTML}
+    <div class="reset-section">
+      <button id="reset-game-btn" class="reset-game-btn">🗑️ 重置遊戲</button>
+    </div>`;
+
+  if (hasBackup()) {
+    el.querySelector('#load-backup-btn').addEventListener('click', loadBackup);
+  }
+  el.querySelector('#reset-game-btn').addEventListener('click', showResetConfirm);
 }
 
 function taskStatValue(key) {

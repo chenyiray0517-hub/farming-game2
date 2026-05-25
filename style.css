@@ -1411,6 +1411,126 @@ body.harvest-mode  * { cursor: none !important; }
 /* ── Pet tab button in nav ── */
 .pet-tab-btn { color: var(--green-dark) !important; }
 
+/* ── Reset Section ── */
+.reset-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.reset-game-btn {
+  padding: 8px 22px;
+  background: transparent;
+  border: 2px solid #e53935;
+  border-radius: 20px;
+  color: #e53935;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  opacity: 0.7;
+}
+.reset-game-btn:hover {
+  background: #fce4ec;
+  opacity: 1;
+}
+
+.backup-restore-section {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+  border: 2px solid #81c784;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.backup-restore-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+.load-backup-btn {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.14s;
+  flex-shrink: 0;
+}
+.load-backup-btn:hover { filter: brightness(1.1); }
+
+/* ── Reset Confirm Modal ── */
+#reset-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rcm-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 28px 22px;
+  min-width: 260px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: erm-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.rcm-icon  { font-size: 36px; }
+.rcm-title { font-size: 17px; font-weight: 800; color: #2c3e50; }
+.rcm-desc  { font-size: 13px; color: #888; line-height: 1.7; }
+
+.rcm-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.rcm-cancel {
+  padding: 9px 22px;
+  border: 2px solid #ddd;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.13s;
+}
+.rcm-cancel:hover { border-color: #bbb; color: #555; }
+
+.rcm-confirm {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.13s;
+  box-shadow: 0 3px 10px rgba(229,57,53,0.4);
+}
+.rcm-confirm:hover { filter: brightness(1.1); }
+
 /* ══ Responsive ══ */
 
 /* Medium screens: scale cells, panel fills remaining right space */
