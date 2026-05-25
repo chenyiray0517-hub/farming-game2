@@ -67,6 +67,16 @@ const PET_TYPES = [
   { id: 'phoenix',  name: '鳳凰',   emoji: '🐦‍🔥', grade: 'legendary', favCrop: 'rose',      xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'extraGrowth',  value: 2,    icon: '🌱', label: '每天多成長 2 天'  }, buff2: { type: 'xpBonus',      value: 0.4,  icon: '⭐', label: '採收 XP +40%'     }, buff3: { type: 'sellBonus',    value: 0.2,  icon: '💰', label: '販售收益 +20%'    } },
   { id: 'unicorn',  name: '獨角獸', emoji: '🦄',    grade: 'legendary', favCrop: 'lotus',     xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'xpBonus',      value: 0.7,  icon: '⭐', label: '採收 XP +70%'     }, buff2: { type: 'shopDiscount', value: 0.35, icon: '🛒', label: '種子費用 -35%'    }, buff3: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' } },
   { id: 'shenlong', name: '神龍',   emoji: '🐲',    grade: 'legendary', favCrop: 'pineapple', xpBase: 60, foodRarities: ['legendary', 'mythical'], buff: { type: 'sellBonus',    value: 0.6,  icon: '💰', label: '販售收益 +60%'    }, buff2: { type: 'noWither',     value: true, icon: '💧', label: '1天不澆水不會枯死' }, buff3: { type: 'extraGrowth',  value: 1,    icon: '🌱', label: '每天多成長 1 天'  } },
+  // ── 神話 ────────────────────────────────────────────────────────────────────
+  { id: 'timedrake',    name: '時光獸',  emoji: '🦋', grade: 'mythical', favCrop: 'rose',      xpBase: 100, foodRarities: ['legendary'], buff: { type: 'extraGrowth', value: 5,    icon: '🌱', label: '每天多成長 +5 天'   }, buff2: { type: 'dailyMoney', value: 100,  icon: '💵', label: '每天 +100 💰'   }, buff3: { type: 'noWither',    value: true, icon: '💧', label: '一天不澆水不會枯死' } },
+  { id: 'chaosspirit',  name: '混沌神靈',emoji: '🌊', grade: 'mythical', favCrop: 'pineapple', xpBase: 100, foodRarities: ['legendary'], buff: { type: 'dailyMoney',  value: 100,  icon: '💵', label: '每天 +100 💰'   }, buff2: { type: 'sellBonus',  value: 0.50, icon: '💰', label: '販售收益 +50%'     }, buff3: { type: 'xpBonus',     value: 0.55, icon: '⭐', label: '採收 XP +55%'      } },
+  { id: 'icedragon',    name: '冰晶龍',  emoji: '❄️', grade: 'mythical', favCrop: 'lotus',     xpBase: 100, foodRarities: ['legendary'], buff: { type: 'sellBonus',   value: 0.60, icon: '💰', label: '販售收益 +60%'     }, buff2: { type: 'dailyMoney', value: 100,  icon: '💵', label: '每天 +100 💰'   }, buff3: { type: 'extraGrowth', value: 2,    icon: '🌱', label: '每天多成長 +2 天'  } },
+  { id: 'moonrabbit',   name: '月兔',    emoji: '🐇', grade: 'mythical', favCrop: 'mango',     xpBase: 100, foodRarities: ['legendary'], buff: { type: 'xpBonus',     value: 0.60, icon: '⭐', label: '採收 XP +60%'      }, buff2: { type: 'dailyMoney', value: 150,  icon: '💵', label: '每天 +150 💰'  } },
+  { id: 'goldendragon', name: '金龍',    emoji: '🌟', grade: 'mythical', favCrop: 'rose',      xpBase: 100, foodRarities: ['legendary'], buff: { type: 'dailyMoney',  value: 150,  icon: '💵', label: '每天 +150 💰'  }, buff2: { type: 'sellBonus',  value: 0.50, icon: '💰', label: '販售收益 +50%'     }, buff3: { type: 'xpBonus',     value: 0.45, icon: '⭐', label: '採收 XP +45%'      } },
+  { id: 'angelbeast',   name: '天使獸',  emoji: '🕊️', grade: 'mythical', favCrop: 'lotus',     xpBase: 100, foodRarities: ['legendary'], buff: { type: 'dailyMoney',  value: 100,  icon: '💵', label: '每天 +100 💰'   }, buff2: { type: 'sellBonus',  value: 0.40, icon: '💰', label: '販售收益 +40%'     }, buff3: { type: 'xpBonus',     value: 0.40, icon: '⭐', label: '採收 XP +40%'      } },
+  { id: 'fategod',      name: '命運神',  emoji: '⚡', grade: 'mythical', favCrop: 'pineapple', xpBase: 100, foodRarities: ['legendary'], buff: { type: 'sellBonus',   value: 0.60, icon: '💰', label: '販售收益 +60%'     }, buff2: { type: 'dailyMoney', value: 150,  icon: '💵', label: '每天 +150 💰'  }, buff3: { type: 'xpBonus',     value: 0.40, icon: '⭐', label: '採收 XP +40%'      } },
+  { id: 'cosmicspirit', name: '宇宙靈',  emoji: '✨', grade: 'mythical', favCrop: 'tulip',     xpBase: 100, foodRarities: ['legendary'], buff: { type: 'sellBonus',   value: 0.50, icon: '💰', label: '販售收益 +50%'     }, buff2: { type: 'dailyMoney', value: 100,  icon: '💵', label: '每天 +100 💰'   }, buff3: { type: 'extraGrowth', value: 2,    icon: '🌱', label: '每天多成長 +2 天'  } },
+  { id: 'chaosdragon',  name: '混沌龍',  emoji: '🌀', grade: 'mythical', favCrop: 'mango',     xpBase: 100, foodRarities: ['legendary'], buff: { type: 'sellBonus',   value: 0.50, icon: '💰', label: '販售收益 +50%'     }, buff2: { type: 'dailyMoney', value: 150,  icon: '💵', label: '每天 +150 💰'  }, buff3: { type: 'extraGrowth', value: 2,    icon: '🌱', label: '每天多成長 +2 天'  } },
 ];
 
 const PET_FEEDS = [
@@ -256,7 +266,7 @@ const DEFAULT_STATE = () => ({
   viewingOwnedId:   null,
   petLevels:        {},
   ownedPets:        [],
-  activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false },
+  activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false, dailyMoney: 0 },
   feedInventory:  {},
   petFeedBoosts:  {},
   petFeedCounts:  {},
@@ -575,6 +585,7 @@ function renderBuffStrip() {
   if (b.shopDiscount > 0)   chips.push(`🛒 種子 -${Math.round(b.shopDiscount * 100)}%`);
   if (b.extraGrowth  > 0)   chips.push(`🌱 成長 +${b.extraGrowth.toFixed(1)}天/日`);
   if (b.noWither)           chips.push(`💧 1天不澆水可緩衝`);
+  if (b.dailyMoney   > 0)  chips.push(`💵 每天 +${Math.round(b.dailyMoney)} 💰`);
   strip.innerHTML = chips.length
     ? chips.map(t => `<span class="buff-chip">${t}</span>`).join('')
     : '';
@@ -1064,6 +1075,14 @@ function endDay() {
   G.boughtToday    = 0;
   G.dailyTasksDone = {};
 
+  // Pet daily money buff
+  if (G.activeBuffs.dailyMoney > 0) {
+    const bonus = Math.round(G.activeBuffs.dailyMoney);
+    G.money       += bonus;
+    G.totalEarned += bonus;
+    showToast(`💵 寵物帶來 +${bonus} 💰`, 2000);
+  }
+
   // Random weather
   const r = Math.random();
   let cum  = 0;
@@ -1147,6 +1166,7 @@ function formatBuffLabel(buff, value) {
     case 'shopDiscount': return `種子費用 -${Math.round(value * 100)}%`;
     case 'extraGrowth':  return `每天多成長 ${value.toFixed(1)} 天`;
     case 'noWither':     return `1天不澆水不會枯死`;
+    case 'dailyMoney':   return `每天 +${Math.round(value)} 💰`;
     default:             return buff.label;
   }
 }
@@ -1161,7 +1181,7 @@ function applyPetBuff(petId, buff) {
 }
 
 function reapplyBuffs() {
-  G.activeBuffs = { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false };
+  G.activeBuffs = { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false, dailyMoney: 0 };
   const counted = new Set();
 
   // Fed daily pets take priority
@@ -1249,7 +1269,7 @@ function releasePet(petId) {
 }
 
 function generateDailyPets() {
-  const GRADE_W = { common: 40, good: 30, premium: 15, legendary: 1 };
+  const GRADE_W = { common: 40, good: 30, premium: 15, legendary: 1, mythical: 0.2 };
   function weightedPick(pool) {
     const total = pool.reduce((s, p) => s + (GRADE_W[p.grade] || 10), 0);
     let r = Math.random() * total;
