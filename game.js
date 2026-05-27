@@ -674,7 +674,7 @@ function renderBottomBar() {
 // ── Shop ──────────────────────────────────
 
 function renderShop(el) {
-  let html = '<div class="shop-hint">選好種子後，長按拖曳農地批量種植<br>非當季種植每天有 25% 枯死率</div>';
+  let html = '<div class="shop-hint">選好種子後，點擊或拖曳農地批量種植<br>非當季種植每天有 25% 枯死率</div>';
 
   ['common', 'good', 'premium', 'legendary', 'mythical'].forEach(rarityKey => {
     const crops = Object.values(CROPS).filter(c => c.rarity === rarityKey);
@@ -2167,15 +2167,13 @@ function bindEvents() {
 
   document.addEventListener('mouseup', () => { isHolding = false; });
 
-  // Touch interaction — drag to plant / water / harvest
-  // Follower position updates immediately in touchmove for zero-lag visual feedback.
-  // Cell detection is deferred to rAF so handleCell (→ renderAll) never runs
-  // inside a touch handler — prevents iOS Safari touchcancel on DOM mutation.
-  // touch-action:none on #farm-wrapper stops the browser intercepting the gesture
-  // as a scroll before JS can preventDefault it.
-  let lastTouchCell   = -1;
-  let pendingTouchPos = null;
-  let touchRAF        = 0;
+  // Touch interaction — tap or drag to plant / water / harvest (same as desktop click/drag)
+  // All DOM mutations (follower position + handleCell→renderAll) happen inside the rAF
+  // poll loop, never inside a touch event handler. This prevents iOS Safari from firing
+  // touchcancel when the DOM changes mid-gesture.
+  let lastTouchCell  = -1;
+  let touchPos       = null;   // updated only by touchmove; read by touchPoll
+  let touchRAF       = 0;
   const touchFollower = document.getElementById('touch-seed-follow');
 
   function activeTouchEmoji() {
@@ -2185,12 +2183,13 @@ function bindEvents() {
     return null;
   }
 
-  function touchFrame() {
-    touchRAF = 0;
-    if (!pendingTouchPos) return;
-    const { x, y } = pendingTouchPos;
-    pendingTouchPos = null;
-    const el   = document.elementFromPoint(x, y);
+  // Continuous rAF loop: updates follower position and detects cell under finger.
+  // Runs every frame while a finger is on the farm; stops when touchPos is cleared.
+  function touchPoll() {
+    if (!touchPos) { touchRAF = 0; return; }
+    touchFollower.style.left = touchPos.x + 'px';
+    touchFollower.style.top  = touchPos.y + 'px';
+    const el   = document.elementFromPoint(touchPos.x, touchPos.y);
     const cell = el?.closest('.plot');
     if (cell) {
       const idx = +cell.dataset.idx;
@@ -2199,24 +2198,20 @@ function bindEvents() {
         handleCell(idx);
       }
     }
+    touchRAF = requestAnimationFrame(touchPoll);
   }
 
   function onTouchMove(e) {
     e.preventDefault();
     const t = e.touches[0];
-    // Update follower immediately — no rAF delay
-    touchFollower.style.left = t.clientX + 'px';
-    touchFollower.style.top  = t.clientY + 'px';
-    // Schedule cell detection for next frame (keeps DOM mutation out of touch handler)
-    pendingTouchPos = { x: t.clientX, y: t.clientY };
-    if (!touchRAF) touchRAF = requestAnimationFrame(touchFrame);
+    touchPos = { x: t.clientX, y: t.clientY };
   }
 
   function onTouchStop() {
     cancelAnimationFrame(touchRAF);
-    touchRAF        = 0;
-    pendingTouchPos = null;
-    lastTouchCell   = -1;
+    touchRAF      = 0;
+    touchPos      = null;
+    lastTouchCell = -1;
     touchFollower.style.display = 'none';
     document.removeEventListener('touchmove',   onTouchMove);
     document.removeEventListener('touchend',    onTouchStop);
@@ -2234,12 +2229,12 @@ function bindEvents() {
       touchFollower.style.top     = t.clientY + 'px';
       touchFollower.style.display = 'block';
     }
-    lastTouchCell   = -1;
-    pendingTouchPos = { x: t.clientX, y: t.clientY };
-    if (!touchRAF) touchRAF = requestAnimationFrame(touchFrame);
+    touchPos      = { x: t.clientX, y: t.clientY };
+    lastTouchCell = -1;
     document.addEventListener('touchmove',   onTouchMove,  { passive: false });
     document.addEventListener('touchend',    onTouchStop);
     document.addEventListener('touchcancel', onTouchStop);
+    if (!touchRAF) touchRAF = requestAnimationFrame(touchPoll);
   }, { passive: false });
 
   // Panel tabs
