@@ -126,6 +126,8 @@ const ENCHANT_OPTIONS = [
   { type: 'noWither',    value: true, icon: '💧', label: '一天不澆水不會枯死'  },
 ];
 const ENCHANT_COST = 10000;
+const TRAIN_MAX    = 5;
+const TRAIN_COST   = 20000;
 
 const EGG_FEED_COST = {
   common:    1000,
@@ -273,10 +275,11 @@ const DEFAULT_STATE = () => ({
   petLevels:        {},
   ownedPets:        [],
   activeBuffs: { xpBonus: 0, sellBonus: 0, shopDiscount: 0, extraGrowth: 0, noWither: false, dailyMoney: 0 },
-  feedInventory:  {},
-  petFeedBoosts:  {},
-  petFeedCounts:  {},
-  petEnchants:    {},
+  feedInventory:   {},
+  petFeedBoosts:   {},
+  petFeedCounts:   {},
+  petEnchants:     {},
+  petTrainCounts:  {},
 });
 
 let G = DEFAULT_STATE();
@@ -295,13 +298,39 @@ function makeDailyTasks() {
 
 function makeAchievements() {
   return [
-    { id: 'ach_first_harvest', title: '第一次收穫',          target: 1,    key: 'totalHarvested', reward: { xp: 50,  money: 0   } },
-    { id: 'ach_earn500',       title: '累計賺取 500 金幣',   target: 500,  key: 'totalEarned',    reward: { xp: 100, money: 50  } },
-    { id: 'ach_harvest20',     title: '累計收穫 20 個作物',  target: 20,   key: 'totalHarvested', reward: { xp: 150, money: 100 } },
-    { id: 'ach_harvest100',    title: '累計收穫 100 個作物', target: 100,  key: 'totalHarvested', reward: { xp: 500, money: 300 } },
-    { id: 'ach_earn2000',      title: '累計賺取 2000 金幣',  target: 2000, key: 'totalEarned',    reward: { xp: 300, money: 200 } },
-    { id: 'ach_lv5',           title: '達到 5 級',           target: 5,    key: 'level',          reward: { xp: 0,   money: 200 } },
-    { id: 'ach_lv10',          title: '達到 10 級',          target: 10,   key: 'level',          reward: { xp: 0,   money: 500 } },
+    // ── 收穫 ──────────────────────────────
+    { id: 'ach_first_harvest', title: '初次收穫',               target: 1,      key: 'totalHarvested', reward: { xp: 50,   money: 0    } },
+    { id: 'ach_harvest20',     title: '累計收穫 20 個作物',     target: 20,     key: 'totalHarvested', reward: { xp: 150,  money: 100  } },
+    { id: 'ach_harvest50',     title: '累計收穫 50 個作物',     target: 50,     key: 'totalHarvested', reward: { xp: 300,  money: 200  } },
+    { id: 'ach_harvest100',    title: '累計收穫 100 個作物',    target: 100,    key: 'totalHarvested', reward: { xp: 500,  money: 300  } },
+    { id: 'ach_harvest300',    title: '累計收穫 300 個作物',    target: 300,    key: 'totalHarvested', reward: { xp: 1000, money: 600  } },
+    { id: 'ach_harvest500',    title: '累計收穫 500 個作物',    target: 500,    key: 'totalHarvested', reward: { xp: 1500, money: 800  } },
+    { id: 'ach_harvest1000',   title: '累計收穫 1000 個作物',   target: 1000,   key: 'totalHarvested', reward: { xp: 3000, money: 2000 } },
+    // ── 金幣 ──────────────────────────────
+    { id: 'ach_earn500',       title: '累計賺取 500 金幣',      target: 500,    key: 'totalEarned',    reward: { xp: 100,  money: 50   } },
+    { id: 'ach_earn2000',      title: '累計賺取 2000 金幣',     target: 2000,   key: 'totalEarned',    reward: { xp: 300,  money: 200  } },
+    { id: 'ach_earn5000',      title: '累計賺取 5000 金幣',     target: 5000,   key: 'totalEarned',    reward: { xp: 600,  money: 400  } },
+    { id: 'ach_earn20000',     title: '累計賺取 20000 金幣',    target: 20000,  key: 'totalEarned',    reward: { xp: 1500, money: 1000 } },
+    { id: 'ach_earn100000',    title: '累計賺取 10 萬金幣',     target: 100000, key: 'totalEarned',    reward: { xp: 5000, money: 3000 } },
+    { id: 'ach_earn500000',    title: '累計賺取 50 萬金幣',     target: 500000, key: 'totalEarned',    reward: { xp: 15000,money: 8000 } },
+    // ── 等級 ──────────────────────────────
+    { id: 'ach_lv5',           title: '達到 5 級',              target: 5,      key: 'level',          reward: { xp: 0,    money: 200  } },
+    { id: 'ach_lv10',          title: '達到 10 級',             target: 10,     key: 'level',          reward: { xp: 0,    money: 500  } },
+    { id: 'ach_lv20',          title: '達到 20 級',             target: 20,     key: 'level',          reward: { xp: 0,    money: 1000 } },
+    { id: 'ach_lv30',          title: '達到 30 級',             target: 30,     key: 'level',          reward: { xp: 0,    money: 2000 } },
+    { id: 'ach_lv50',          title: '達到 50 級',             target: 50,     key: 'level',          reward: { xp: 0,    money: 5000 } },
+    { id: 'ach_lv100',         title: '達到 100 級',            target: 100,    key: 'level',          reward: { xp: 0,    money: 15000} },
+    // ── 存活天數 ─────────────────────────
+    { id: 'ach_day7',          title: '在農場存活 7 天',        target: 7,      key: 'day',            reward: { xp: 100,  money: 100  } },
+    { id: 'ach_day30',         title: '在農場存活 30 天',       target: 30,     key: 'day',            reward: { xp: 400,  money: 300  } },
+    { id: 'ach_day100',        title: '在農場存活 100 天',      target: 100,    key: 'day',            reward: { xp: 2000, money: 1000 } },
+    { id: 'ach_day200',        title: '在農場存活 200 天',      target: 200,    key: 'day',            reward: { xp: 5000, money: 3000 } },
+    { id: 'ach_day365',        title: '一整年的農場生活',       target: 365,    key: 'day',            reward: { xp: 12000,money: 8000 } },
+    // ── 寵物 ──────────────────────────────
+    { id: 'ach_pet1',          title: '收留第一隻寵物',         target: 1,      key: 'ownedPetsCount', reward: { xp: 200,  money: 200  } },
+    { id: 'ach_pet3',          title: '同時收留 3 隻寵物',      target: 3,      key: 'ownedPetsCount', reward: { xp: 600,  money: 500  } },
+    { id: 'ach_pet5',          title: '同時收留 5 隻寵物',      target: 5,      key: 'ownedPetsCount', reward: { xp: 1500, money: 1000 } },
+    { id: 'ach_pet8',          title: '農場大家庭！住滿 8 隻',  target: 8,      key: 'ownedPetsCount', reward: { xp: 4000, money: 3000 } },
   ];
 }
 
@@ -342,10 +371,11 @@ function loadBackup() {
     G.feedingPetIdx  = -1;
     G.viewingPetIdx  = -1;
     G.viewingOwnedId = null;
-    if (!G.feedInventory) G.feedInventory = {};
-    if (!G.petFeedBoosts) G.petFeedBoosts = {};
-    if (!G.petFeedCounts) G.petFeedCounts = {};
-    if (!G.petEnchants)   G.petEnchants   = {};
+    if (!G.feedInventory)  G.feedInventory  = {};
+    if (!G.petFeedBoosts)  G.petFeedBoosts  = {};
+    if (!G.petFeedCounts)  G.petFeedCounts  = {};
+    if (!G.petEnchants)    G.petEnchants    = {};
+    if (!G.petTrainCounts) G.petTrainCounts = {};
     reapplyBuffs();
     localStorage.removeItem(BACKUP_KEY);
     save();
@@ -402,10 +432,11 @@ function loadFromSlot(n) {
       if (p.dryDays === undefined) p.dryDays = 0;
     });
     G.feedingPetIdx = -1; G.viewingPetIdx = -1; G.viewingOwnedId = null;
-    if (!G.feedInventory) G.feedInventory = {};
-    if (!G.petFeedBoosts) G.petFeedBoosts = {};
-    if (!G.petFeedCounts) G.petFeedCounts = {};
-    if (!G.petEnchants)   G.petEnchants   = {};
+    if (!G.feedInventory)  G.feedInventory  = {};
+    if (!G.petFeedBoosts)  G.petFeedBoosts  = {};
+    if (!G.petFeedCounts)  G.petFeedCounts  = {};
+    if (!G.petEnchants)    G.petEnchants    = {};
+    if (!G.petTrainCounts) G.petTrainCounts = {};
     reapplyBuffs();
     save();
     document.getElementById('save-slots-modal')?.remove();
@@ -518,10 +549,11 @@ function load() {
   G.feedingPetIdx  = -1; // always reset transient state
   G.viewingPetIdx  = -1;
   G.viewingOwnedId = null;
-  if (!G.feedInventory) G.feedInventory = {};
-  if (!G.petFeedBoosts) G.petFeedBoosts = {};
-  if (!G.petFeedCounts) G.petFeedCounts = {};
-  if (!G.petEnchants)   G.petEnchants   = {};
+  if (!G.feedInventory)  G.feedInventory  = {};
+  if (!G.petFeedBoosts)  G.petFeedBoosts  = {};
+  if (!G.petFeedCounts)  G.petFeedCounts  = {};
+  if (!G.petEnchants)    G.petEnchants    = {};
+  if (!G.petTrainCounts) G.petTrainCounts = {};
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -664,6 +696,7 @@ function renderPanel() {
   else if (G.activeTab === 'tasks')     renderTasks(body);
   else if (G.activeTab === 'enchant')   renderEnchant(body);
   else if (G.activeTab === 'petshop')   renderPetShop(body);
+  else if (G.activeTab === 'trainer')   renderTrainer(body);
 }
 
 function renderBottomBar() {
@@ -809,7 +842,16 @@ function renderTasks(el) {
 }
 
 function taskStatValue(key) {
-  return { harvestedToday: G.harvestedToday, earnedToday: G.earnedToday, boughtToday: G.boughtToday, totalHarvested: G.totalHarvested, totalEarned: G.totalEarned, level: G.level }[key] ?? 0;
+  return {
+    harvestedToday:  G.harvestedToday,
+    earnedToday:     G.earnedToday,
+    boughtToday:     G.boughtToday,
+    totalHarvested:  G.totalHarvested,
+    totalEarned:     G.totalEarned,
+    level:           G.level,
+    day:             G.day,
+    ownedPetsCount:  (G.ownedPets || []).length,
+  }[key] ?? 0;
 }
 
 // ══════════════════════════════════════════
@@ -1178,11 +1220,12 @@ function formatBuffLabel(buff, value) {
 }
 
 function applyPetBuff(petId, buff) {
-  const lv = getPetLevel(petId);
+  const lv        = getPetLevel(petId);
+  const trainMult = 1 + 0.05 * ((G.petTrainCounts || {})[petId] || 0);
   if (buff.type === 'noWither') {
     G.activeBuffs.noWither = true;
   } else {
-    G.activeBuffs[buff.type] = (G.activeBuffs[buff.type] || 0) + scaledBuffValue(buff, lv);
+    G.activeBuffs[buff.type] = (G.activeBuffs[buff.type] || 0) + scaledBuffValue(buff, lv) * trainMult;
   }
 }
 
@@ -1251,11 +1294,12 @@ function adoptPet(petIdx) {
   if (!pet || !pet.fed) return;
   if (!G.ownedPets) G.ownedPets = [];
   if (G.ownedPets.includes(pet.id)) { showToast(`${pet.emoji} 已經在農場裡了！`); return; }
-  if (G.ownedPets.length >= 5) { showToast('🏡 農場最多容納 5 隻寵物，請先放生一隻！', 3000); return; }
+  if (G.ownedPets.length >= 8) { showToast('🏡 農場最多容納 8 隻寵物，請先放生一隻！', 3000); return; }
   G.ownedPets.push(pet.id);
   reapplyBuffs();
   SFX.adopt();
   showToast(`🐾 ${pet.emoji} ${pet.name} 永久加入了你的農場！`, 3000);
+  checkTasks();
   save();
   renderPetScreen();
   renderAll();
@@ -1633,6 +1677,85 @@ function renderEnchant(el) {
   });
 }
 
+// ── Pet Trainer ───────────────────────────
+
+function trainPet(petId) {
+  if (!G.petTrainCounts) G.petTrainCounts = {};
+  const trains = G.petTrainCounts[petId] || 0;
+  if (trains >= TRAIN_MAX) { showToast('✨ 已達訓練上限！'); return; }
+  if (G.money < TRAIN_COST) { SFX.error(); showToast(`💰 金幣不足！需要 ${TRAIN_COST.toLocaleString()} 金幣`); return; }
+  const pt = PET_TYPES.find(p => p.id === petId);
+  G.money -= TRAIN_COST;
+  G.petTrainCounts[petId] = trains + 1;
+  reapplyBuffs();
+  SFX.petLevelUp();
+  showToast(`${pt?.emoji || ''} ${pt?.name || ''} 訓練完成！所有能力 +5%（${trains + 1}/${TRAIN_MAX}）`, 2500);
+  save();
+  renderAll();
+}
+
+function renderTrainer(el) {
+  const owned = G.ownedPets || [];
+  if (!owned.length) {
+    el.innerHTML = `<div class="empty-msg">先收留寵物才能進行訓練 💪<br>在寵物頁面餵食後點「收留牠」</div>`;
+    return;
+  }
+
+  let html = `<div class="shop-hint">強化寵物的所有數值能力 +5%<br>每隻限 <b>${TRAIN_MAX} 次</b>，每次費用 <b>${TRAIN_COST.toLocaleString()} 💰</b></div>`;
+
+  owned.forEach(petId => {
+    const pt     = PET_TYPES.find(p => p.id === petId);
+    if (!pt) return;
+    const lv     = getPetLevel(petId);
+    const trains = (G.petTrainCounts || {})[petId] || 0;
+    const isMax  = trains >= TRAIN_MAX;
+    const mult   = 1 + 0.05 * trains;
+    const dg     = pt.grade || 'common';
+    const dgInfo = RARITIES[dg];
+
+    const buffRows = [pt.buff, getPetEffBuff(petId, 'buff2'), getPetEffBuff(petId, 'buff3')]
+      .filter(Boolean)
+      .map(b => {
+        if (b.type === 'noWither') {
+          return `<div class="enchant-buff-row">
+            <span class="enchant-row-icon">${b.icon}</span>
+            <span class="enchant-row-label">1天不澆水不會枯死</span>
+            <span class="enchant-lock-tag">不受訓練影響</span>
+          </div>`;
+        }
+        const val = scaledBuffValue(b, lv) * mult;
+        return `<div class="enchant-buff-row${trains > 0 ? ' enchanted' : ''}">
+          <span class="enchant-row-icon">${b.icon}</span>
+          <span class="enchant-row-label">${formatBuffLabel(b, val)}${trains > 0 ? ' ✦' : ''}</span>
+        </div>`;
+      }).join('');
+
+    html += `
+      <div class="enchant-card">
+        <div class="enchant-card-head">
+          <span class="enchant-pet-emoji">${pt.emoji}</span>
+          <div class="enchant-pet-info">
+            <span class="enchant-pet-name">${pt.name}</span>
+            <span class="rarity-badge" style="color:${dgInfo.badgeColor};background:${dgInfo.badgeBg}">${dgInfo.name}</span>
+            <span class="enchant-pet-lv">Lv.${lv}</span>
+          </div>
+        </div>
+        <div style="font-size:12px;margin-bottom:7px;color:${isMax ? 'var(--gold-dark)' : '#888'}">
+          訓練次數：${trains}/${TRAIN_MAX}${trains > 0 ? `　所有能力 ×${mult.toFixed(2)}` : ''}
+        </div>
+        ${buffRows}
+        ${isMax
+          ? `<div style="text-align:center;font-size:12px;color:var(--gold-dark);font-weight:700;margin-top:8px">✨ 已達訓練上限</div>`
+          : `<button class="enchant-btn" style="width:100%;margin-top:8px;padding:7px 0" data-petid="${petId}">💪 訓練（${TRAIN_COST.toLocaleString()} 💰）</button>`}
+      </div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.enchant-btn[data-petid]').forEach(btn => {
+    btn.addEventListener('click', () => trainPet(btn.dataset.petid));
+  });
+}
+
 // ── Pet Shop ──────────────────────────────
 
 function renderPetShop(el) {
@@ -1843,7 +1966,7 @@ function showEggResultModal(pet, grade, mythicalFallback) {
   function render() {
     const rarity   = RARITIES[grade];
     const isOwned  = (G.ownedPets || []).includes(pet.id);
-    const isFull   = (G.ownedPets || []).length >= 5;
+    const isFull   = (G.ownedPets || []).length >= 8;
     const feedCost = EGG_FEED_COST[grade];
 
     const buffLines = [pet.buff, pet.buff2, pet.buff3]
@@ -1865,7 +1988,7 @@ function showEggResultModal(pet, grade, mythicalFallback) {
         <div class="erm-fed-note">🍖 牠已吃飽，可以收留了！</div>
         <div class="erm-actions">
           ${isFull
-            ? '<div class="erm-full-note">農場已滿（5/5）</div>'
+            ? '<div class="erm-full-note">農場已滿（8/8）</div>'
             : '<button class="erm-adopt" id="erm-adopt">🏠 收留牠！</button>'}
           <button class="erm-release" id="erm-release">🌿 放生</button>
         </div>`;
@@ -1944,11 +2067,12 @@ function showEggResultModal(pet, grade, mythicalFallback) {
 
     modal.querySelector('#erm-adopt')?.addEventListener('click', () => {
       if (!G.ownedPets) G.ownedPets = [];
-      if (G.ownedPets.length >= 5) { showToast('🏡 農場已滿！'); return; }
+      if (G.ownedPets.length >= 8) { showToast('🏡 農場已滿！'); return; }
       G.ownedPets.push(pet.id);
       reapplyBuffs();
       SFX.adopt();
       showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 3000);
+      checkTasks();
       save(); renderAll(); modal.remove();
     });
 
@@ -1976,7 +2100,7 @@ function showEggMultiResultModal(results) {
 
   function render() {
     const adoptedCount = adoptedSet.size;
-    const slotsLeft    = Math.max(0, 5 - (G.ownedPets || []).length - adoptedCount);
+    const slotsLeft    = Math.max(0, 8 - (G.ownedPets || []).length - adoptedCount);
 
     const cardsHtml = results.map(({ pet, grade, mythicalFallback }, i) => {
       const rarity     = RARITIES[grade];
@@ -2091,12 +2215,13 @@ function showEggMultiResultModal(results) {
         const idx = parseInt(btn.dataset.idx);
         const { pet } = results[idx];
         if (!G.ownedPets) G.ownedPets = [];
-        if (G.ownedPets.length + adoptedSet.size >= 5) { showToast('🏡 農場已滿！'); return; }
+        if (G.ownedPets.length + adoptedSet.size >= 8) { showToast('🏡 農場已滿！'); return; }
         G.ownedPets.push(pet.id);
         adoptedSet.add(idx);
         reapplyBuffs();
         SFX.adopt();
         showToast(`🐾 ${pet.emoji} ${pet.name} 加入了農場！`, 2000);
+        checkTasks();
         save(); renderAll(); render();
       });
     });
@@ -2255,6 +2380,7 @@ function bindEvents() {
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
   document.getElementById('petshop-btn').addEventListener('click', () => { G.activeTab = 'petshop'; renderPanel(); });
   document.getElementById('enchant-btn').addEventListener('click', () => { G.activeTab = 'enchant'; renderPanel(); });
+  document.getElementById('trainer-btn').addEventListener('click', () => { G.activeTab = 'trainer'; renderPanel(); });
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
 }
