@@ -235,10 +235,93 @@ const SFX = (() => {
   };
 })();
 
+// ── BGM ────────────────────────────────────
+const BGM = (() => {
+  let ctx = null, masterGain = null, schedId = null;
+  let nextBarTime = 0, barIdx = 0;
+  const TEMPO = 76, BEAT = 60 / TEMPO, BAR = BEAT * 4, VOL = 0.055;
+
+  // C - G - Am - F (low octave pads)
+  const CHORDS = [
+    [130.81, 164.81, 196.00],
+    [98.00,  146.83, 196.00],
+    [110.00, 130.81, 164.81],
+    [87.31,  130.81, 174.61],
+  ];
+  // Pentatonic melody (quarter notes per bar)
+  const MELODY = [
+    [523.25, 659.25, 784.00, 659.25],
+    [587.33, 784.00, 698.46, 587.33],
+    [523.25, 659.25, 880.00, 659.25],
+    [523.25, 440.00, 392.00, 349.23],
+  ];
+
+  function init() {
+    if (ctx) return;
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = sfxMuted ? 0 : VOL;
+      masterGain.connect(ctx.destination);
+    } catch (_) {}
+  }
+
+  function scheduleBar(when, bar) {
+    const chord = CHORDS[bar % 4], mel = MELODY[bar % 4];
+    chord.forEach(freq => {
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(0.38, when + 0.08);
+      g.gain.setValueAtTime(0.38, when + BAR - 0.15);
+      g.gain.linearRampToValueAtTime(0, when + BAR);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(when); osc.stop(when + BAR);
+    });
+    mel.forEach((freq, i) => {
+      const t = when + i * BEAT;
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'triangle'; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.55, t + 0.02);
+      g.gain.setValueAtTime(0.55, t + BEAT * 0.6);
+      g.gain.linearRampToValueAtTime(0, t + BEAT * 0.88);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(t); osc.stop(t + BEAT);
+    });
+  }
+
+  function tick() {
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    while (nextBarTime < ctx.currentTime + 2) {
+      scheduleBar(nextBarTime, barIdx++);
+      nextBarTime += BAR;
+    }
+    schedId = setTimeout(tick, 600);
+  }
+
+  return {
+    start() {
+      init();
+      if (!ctx || schedId) return;
+      nextBarTime = ctx.currentTime + 0.15;
+      barIdx = 0;
+      tick();
+    },
+    setMuted(muted) {
+      if (!masterGain) return;
+      masterGain.gain.setTargetAtTime(muted ? 0 : VOL, ctx.currentTime, 0.4);
+      if (!muted && !schedId) { nextBarTime = ctx.currentTime + 0.15; tick(); }
+    },
+  };
+})();
+
 function toggleMute() {
   sfxMuted = !sfxMuted;
   localStorage.setItem('farm_sfx_muted', sfxMuted ? '1' : '0');
   document.getElementById('mute-btn').textContent = sfxMuted ? '🔇' : '🔊';
+  BGM.setMuted(sfxMuted);
 }
 
 // ══════════════════════════════════════════
@@ -2394,3 +2477,4 @@ bindEvents();
 updateCursor();
 renderAll();
 document.getElementById('mute-btn').textContent = sfxMuted ? '🔇' : '🔊';
+document.addEventListener('click', () => BGM.start(), { once: true });
