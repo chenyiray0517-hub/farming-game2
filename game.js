@@ -694,6 +694,7 @@ function renderAll() {
   renderPanel();
   renderBottomBar();
   renderBuffStrip();
+  updateNPCAlert();
 }
 
 function renderBuffStrip() {
@@ -1248,6 +1249,239 @@ function endDay() {
 }
 
 // ══════════════════════════════════════════
+//  NPC DIALOGUE SYSTEM
+// ══════════════════════════════════════════
+
+const NPC_NAME = '阿土伯';
+let _npcBubbleTimer = null;
+let _lastNPCText    = '';
+
+function getNPCFarmDialogues() {
+  const readyCount     = G.grid.filter(p => p.state === 'ready').length;
+  const witheredCount  = G.grid.filter(p => p.state === 'withered').length;
+  const unwateredCount = G.grid.filter(p => p.state === 'growing' && !p.watered).length;
+  const growingCount   = G.grid.filter(p => p.state === 'growing').length;
+  const rainDay        = WEATHERS[G.weather].bonus > 0;
+  const ownedCount     = (G.ownedPets || []).length;
+  const pool           = [];
+
+  // 第一天特別問候
+  if (G.day === 1 && G.totalHarvested === 0) {
+    return [
+      '歡迎來到農場！我是阿土伯，在這裡種了幾十年的田了！',
+      '先去右邊商店選個種子，再點農地就能種下去！',
+      '記得每天收工前要澆水，不然明天作物就枯死了喔！',
+    ];
+  }
+
+  // 緊急事件優先
+  if (witheredCount > 0) {
+    pool.push(`哎呀！有 ${witheredCount} 株植物枯死了，快點它清掉！`);
+    pool.push('沒澆水的作物撐不過一個晚上，下次可要記得勤快！');
+  }
+  if (readyCount >= 5) {
+    pool.push(`哇！有 ${readyCount} 個作物可以收穫了，趕快去收啊！`);
+    pool.push('作物都熟了還不收，是要讓它自己走進倉庫嗎？快去！');
+  } else if (readyCount > 0) {
+    pool.push(`有 ${readyCount} 個作物已經成熟了，去收穫吧！`);
+  }
+  if (unwateredCount > 0 && !rainDay) {
+    pool.push(`還有 ${unwateredCount} 塊地沒澆水！明天它們就完蛋了！`);
+    pool.push('澆水澆水！沒澆水的作物今晚就枯了！');
+  }
+
+  // 天氣相關
+  if (rainDay) {
+    pool.push('今天下雨了！不用澆水，作物還會成長更快，好日子啊！');
+    pool.push('雨天是農夫的假日，讓老天爺幫你澆水！');
+  } else if (G.weather === 2) {
+    pool.push('霧天濕氣重，對作物沒什麼影響，放心種！');
+  } else if (G.weather === 3) {
+    pool.push('陰天...感覺快下雨了。田裡的活還是要做！');
+  }
+
+  // 季節提示
+  const seasonLines = [
+    ['春天是播種的好季節，馬鈴薯、小麥、豌豆都很適合！', `春天${SEASON_ICONS[0]}土地最肥沃，好好把握！`],
+    ['夏天陽光充足，辣椒、玉米、番茄都能大豐收！',       `夏天${SEASON_ICONS[1]}熱是熱，但作物長得快！`],
+    ['秋天豐收時節，地瓜、蘑菇、葡萄是不錯的選擇！',     `秋天${SEASON_ICONS[2]}收成的季節！好好努力！`],
+    ['冬天能種的作物少，大蒜是少數當季選擇。',             `冬天${SEASON_ICONS[3]}難種，可以養養寵物存存錢！`],
+  ];
+  pool.push(...seasonLines[G.season]);
+
+  // 選了非當季種子提醒
+  if (G.selectedSeed) {
+    const sel = CROPS[G.selectedSeed];
+    if (sel && !sel.seasons.includes(G.season)) {
+      pool.push(`${sel.name}現在不是當季啊！非當季種下去每天有 25% 枯死風險！`);
+    }
+  }
+
+  // 金幣
+  if (G.money < 100) {
+    pool.push('金幣快沒了！快去倉庫把作物賣掉補資金！');
+  } else if (G.money > 200000) {
+    pool.push(`你現在有 ${G.money.toLocaleString()} 金幣？真是個有錢的農場主！`);
+  }
+
+  // 等級
+  if (G.level >= 20) {
+    pool.push(`Lv.${G.level}！你已經是這一帶最厲害的農夫了！`);
+  } else if (G.level >= 10) {
+    pool.push(`Lv.${G.level}，不錯的進展！繼續努力，有新的作物在等你！`);
+  }
+
+  // 寵物提示
+  if (ownedCount === 0) {
+    pool.push('去寵物頁面看看，餵食小動物可以獲得各種加成喔！');
+    pool.push('聽說養了寵物可以讓作物長更快、賣更多錢！');
+  } else {
+    pool.push(`你有 ${ownedCount} 隻寵物，牠們每天都默默幫助你！`);
+  }
+
+  // 天數
+  pool.push(`今天是第 ${G.day} 天，${SEASONS[G.season]}天的農場景色真不錯。`);
+
+  // 一般農業智慧
+  const wisdom = [
+    '農業的精髓是耐心和勤勞，缺一不可！',
+    '非當季的作物有枯死風險，謹慎選擇！',
+    '任務完成有獎勵，不要忘記看任務欄！',
+    '倉庫的作物不會消失，但早賣早有錢花！',
+    '寵物的加成效果是疊加的，多收留幾隻吧！',
+    '點「全部收穫」最省時間，別一個個慢慢點！',
+    '附魔和訓練可以讓寵物更強，記得多利用！',
+    '存檔要常存，人生無常啊！',
+    '雨天作物多成長一天，是農夫最喜歡的天氣！',
+    '高稀有度的作物成長天數長，但賣價也更高！',
+  ];
+  pool.push(...wisdom);
+
+  return pool;
+}
+
+function getNPCPetDialogues() {
+  const dailyPets   = G.dailyPets || [];
+  const fedCount    = dailyPets.filter(p => p.fed).length;
+  const totalPets   = dailyPets.length;
+  const ownedCount  = (G.ownedPets || []).length;
+  const hasLegendary = dailyPets.some(p => p.grade === 'legendary');
+  const hasMythical  = dailyPets.some(p => p.grade === 'mythical');
+  const pool         = [];
+
+  // 神話 / 傳奇動物
+  if (hasMythical) {
+    pool.push('天啊！今天居然有神話等級的靈獸來訪！千萬不要讓牠跑掉！！');
+    pool.push('老頭我活了這麼大把年紀，神話生物屈指可數！快去餵牠！');
+  } else if (hasLegendary) {
+    pool.push('今天有傳奇等級的動物來訪！這種機會不多，把握住！');
+    pool.push('傳奇動物的能力超強，有機會務必收留！');
+  }
+
+  // 餵食狀態
+  if (fedCount === 0) {
+    pool.push('今天的動物們肚子還空著，趕快去餵牠們！');
+    pool.push('餵食需要 10 個相同的作物喔！用最愛的食物餵還有驚喜！');
+    pool.push('動物們眼巴巴地等著你呢，快去給牠們點吃的！');
+  } else if (fedCount === totalPets) {
+    pool.push('今天所有動物都吃飽了！喜歡哪隻就點「收留牠」吧！');
+    pool.push('吃飽的動物buff已發動！去看看農場加成有沒有變化！');
+  } else {
+    pool.push(`還有 ${totalPets - fedCount} 隻動物沒吃飯，快去餵！`);
+  }
+
+  // 收留狀態
+  if (ownedCount === 0) {
+    pool.push('農場現在沒有長住的夥伴，收留一隻吧！每天都有加成的！');
+  } else if (ownedCount >= 8) {
+    pool.push('農場住滿 8 隻了！真是個熱鬧的大家庭！');
+  } else {
+    pool.push(`你已收留了 ${ownedCount} 隻，還有 ${8 - ownedCount} 個空位！`);
+  }
+
+  // 一般寵物技巧
+  const tips = [
+    '用最愛的食物餵食，除了buff外還有額外獎勵！',
+    '寵物升級後，buff效果會更強！記得花金幣升等！',
+    '去「寵物商店」買蛋抽新寵物，說不定有驚喜！',
+    '附魔可以替換副屬性，訓練可以提升全部數值！',
+    '每天來這裡都會有不同的動物訪客，每天記得來看！',
+    '傳說中有神話等級的靈獸潛伏在這附近...你遇過嗎？',
+    '寵物的能力是疊加的，多收留幾隻效果更明顯！',
+    '餵食牠們最喜歡的食物，可以讓牠們心情更好喔！',
+  ];
+  pool.push(...tips);
+
+  return pool;
+}
+
+function showNPCBubble(btnId, context) {
+  // 移除已有的泡泡
+  document.getElementById('npc-speech-bubble')?.remove();
+  clearTimeout(_npcBubbleTimer);
+  _npcBubbleTimer = null;
+
+  const pool = context === 'pet' ? getNPCPetDialogues() : getNPCFarmDialogues();
+
+  // 避免連續重複同一句話
+  const candidates = pool.filter(t => t !== _lastNPCText);
+  const src        = candidates.length ? candidates : pool;
+  const text       = src[Math.floor(Math.random() * src.length)];
+  _lastNPCText     = text;
+
+  const bubble = document.createElement('div');
+  bubble.id        = 'npc-speech-bubble';
+  bubble.className = 'npc-bubble';
+  bubble.innerHTML = `<span class="npc-bubble-name">🧑‍🌾 ${NPC_NAME}</span>${text}`;
+  document.body.appendChild(bubble);
+
+  // 根據按鈕位置決定泡泡方向
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    const rect      = btn.getBoundingClientRect();
+    const bubbleW   = 234;
+    const spaceRight = window.innerWidth - rect.right;
+
+    if (spaceRight >= bubbleW + 16) {
+      bubble.style.left = (rect.right + 12) + 'px';
+      bubble.classList.add('tail-left');
+    } else {
+      bubble.style.left = Math.max(8, rect.left - bubbleW - 12) + 'px';
+      bubble.classList.add('tail-right');
+    }
+    // 垂直置中對齊按鈕
+    const top = Math.max(8, rect.top + rect.height / 2 - 52);
+    bubble.style.top = top + 'px';
+  }
+
+  // 6 秒後自動淡出
+  _npcBubbleTimer = setTimeout(() => {
+    if (!bubble.parentNode) return;
+    bubble.style.transition = 'opacity 0.35s';
+    bubble.style.opacity    = '0';
+    setTimeout(() => bubble.remove(), 360);
+    _npcBubbleTimer = null;
+  }, 6000);
+}
+
+function updateNPCAlert() {
+  const btn = document.getElementById('npc-btn');
+  if (!btn) return;
+  const readyCount    = G.grid.filter(p => p.state === 'ready').length;
+  const witheredCount = G.grid.filter(p => p.state === 'withered').length;
+  const isAlert       = readyCount > 0 || witheredCount > 0 || (G.day === 1 && G.totalHarvested === 0);
+  btn.classList.toggle('npc-alert', isAlert);
+}
+
+function updatePetNPCAlert() {
+  const btn = document.getElementById('pet-npc-btn');
+  if (!btn) return;
+  const unfed      = (G.dailyPets || []).filter(p => !p.fed).length;
+  const hasSpecial = (G.dailyPets || []).some(p => p.grade === 'legendary' || p.grade === 'mythical');
+  btn.classList.toggle('npc-alert', unfed > 0 || hasSpecial);
+}
+
+// ══════════════════════════════════════════
 //  TOAST
 // ══════════════════════════════════════════
 
@@ -1419,10 +1653,17 @@ function generateDailyPets() {
   reapplyBuffs();
 }
 
+function dismissNPCBubble() {
+  document.getElementById('npc-speech-bubble')?.remove();
+  clearTimeout(_npcBubbleTimer);
+  _npcBubbleTimer = null;
+}
+
 function openPetScreen() {
   G.feedingPetIdx  = -1;
   G.viewingPetIdx  = -1;
   G.viewingOwnedId = null;
+  dismissNPCBubble();
   document.getElementById('pet-screen').hidden = false;
   renderPetScreen();
 }
@@ -1431,6 +1672,7 @@ function closePetScreen() {
   G.feedingPetIdx  = -1;
   G.viewingPetIdx  = -1;
   G.viewingOwnedId = null;
+  dismissNPCBubble();
   document.getElementById('pet-screen').hidden = true;
 }
 
@@ -1537,6 +1779,7 @@ function renderPetScreen() {
     else if (btn.dataset.act === 'adopt')     { adoptPet(parseInt(btn.dataset.pet)); }
   };
   renderOwnedPets();
+  updatePetNPCAlert();
 }
 
 function renderOwnedPets() {
@@ -2466,6 +2709,27 @@ function bindEvents() {
   document.getElementById('trainer-btn').addEventListener('click', () => { G.activeTab = 'trainer'; renderPanel(); });
   document.getElementById('pet-back-btn').addEventListener('click', closePetScreen);
   document.getElementById('mute-btn').addEventListener('click', toggleMute);
+
+  // NPC
+  document.getElementById('npc-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    showNPCBubble('npc-btn', 'farm');
+  });
+  document.getElementById('pet-npc-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    showNPCBubble('pet-npc-btn', 'pet');
+  });
+
+  // 點其他地方關閉泡泡
+  document.addEventListener('click', () => {
+    const bubble = document.getElementById('npc-speech-bubble');
+    if (!bubble) return;
+    clearTimeout(_npcBubbleTimer);
+    _npcBubbleTimer = null;
+    bubble.style.transition = 'opacity 0.25s';
+    bubble.style.opacity    = '0';
+    setTimeout(() => bubble.remove(), 260);
+  });
 }
 
 // ══════════════════════════════════════════

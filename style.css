@@ -499,6 +499,153 @@ body.harvest-mode  * { cursor: none !important; }
   color: #fff;
 }
 
+/* ── NPC (阿土伯) ── */
+#npc-btn {
+  position: fixed;
+  left: 18px;
+  bottom: 72px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.45);
+  background: linear-gradient(135deg, #8d6e63, #5d4037);
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  z-index: 50;
+  animation: npc-bounce 2.8s ease-in-out infinite;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.15s;
+}
+#npc-btn:hover {
+  animation: none;
+  transform: scale(1.14);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+}
+@keyframes npc-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* 緊急提示紅點 */
+#npc-btn.npc-alert::after,
+#pet-npc-btn.npc-alert::after {
+  content: '!';
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 17px;
+  height: 17px;
+  background: #e53935;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 900;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: npc-alert-pulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes npc-alert-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.35); }
+}
+
+/* Pet screen NPC */
+#pet-npc-btn {
+  position: absolute;
+  left: 22px;
+  bottom: 38px;
+  font-size: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.35));
+  animation: npc-bounce 3.2s ease-in-out infinite;
+  line-height: 1;
+  padding: 0;
+  transition: transform 0.15s;
+}
+#pet-npc-btn:hover {
+  animation: none;
+  transform: scale(1.16) translateY(-4px);
+}
+
+/* ── NPC Speech Bubble ── */
+.npc-bubble {
+  position: fixed;
+  max-width: 230px;
+  min-width: 150px;
+  background: #fffde7;
+  border: 2.5px solid #f9a825;
+  border-radius: 16px;
+  padding: 12px 15px 11px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #3e2723;
+  z-index: 301;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.22);
+  animation: npc-bubble-pop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+.npc-bubble-name {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #bf360c;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+/* tail pointing left (bubble is to the right of NPC) */
+.npc-bubble.tail-left::before {
+  content: '';
+  position: absolute;
+  left: -11px;
+  top: 22px;
+  border-width: 8px 11px 8px 0;
+  border-style: solid;
+  border-color: transparent #f9a825 transparent transparent;
+}
+.npc-bubble.tail-left::after {
+  content: '';
+  position: absolute;
+  left: -7.5px;
+  top: 23px;
+  border-width: 7px 9px 7px 0;
+  border-style: solid;
+  border-color: transparent #fffde7 transparent transparent;
+}
+/* tail pointing right (bubble is to the left of NPC) */
+.npc-bubble.tail-right::before {
+  content: '';
+  position: absolute;
+  right: -11px;
+  top: 22px;
+  border-width: 8px 0 8px 11px;
+  border-style: solid;
+  border-color: transparent transparent transparent #f9a825;
+}
+.npc-bubble.tail-right::after {
+  content: '';
+  position: absolute;
+  right: -7.5px;
+  top: 23px;
+  border-width: 7px 0 7px 9px;
+  border-style: solid;
+  border-color: transparent transparent transparent #fffde7;
+}
+@keyframes npc-bubble-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
 /* ── Pet / Petshop / Enchant Buttons ── */
 #pet-btn,
 #petshop-btn,
