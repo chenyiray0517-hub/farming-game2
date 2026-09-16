@@ -158,13 +158,20 @@ const RARITIES = {
   mythical:  { name: '神話', color: '#bf360c', borderColor: '#ff7043', badgeBg: '#fbe9e7', badgeColor: '#7f0000' },
 };
 
+// 等級稱號：達到 minLevel 以上即套用（由高往低比對）
 const LEVEL_TITLES = [
-  '',
-  '農業新手', '農業初學', '業餘農夫', '農夫',   '熟練農夫',
-  '資深農夫', '農場老手', '農場主人', '農業達人', '老農',
-  '農業專家', '農業大師', '農業宗師', '農耕大師', '傳奇農夫',
-  '農業至尊', '種田之神', '大地之主', '農業傳說', '萬世農神',
+  { minLevel: 250, title: '絕世農夫' },
+  { minLevel: 200, title: '宗師農夫' },
+  { minLevel: 150, title: '大師農夫' },
+  { minLevel: 125, title: '菁英農夫' },
+  { minLevel: 100, title: '鑽石農夫' },
+  { minLevel: 80,  title: '白金農夫' },
+  { minLevel: 60,  title: '黃金農夫' },
+  { minLevel: 40,  title: '白銀農夫' },
+  { minLevel: 20,  title: '青銅農夫' },
+  { minLevel: 1,   title: '新手農夫' },
 ];
+function levelTitle(level) { return (LEVEL_TITLES.find(t => level >= t.minLevel) || LEVEL_TITLES[LEVEL_TITLES.length - 1]).title; }
 
 // 農田擴建階段：初始 2×2，依等級 + 金幣逐步擴大，Lv.50 可擴到完整 6×7
 const FARM_TIERS = [
@@ -750,7 +757,7 @@ function renderTopBar() {
   document.getElementById('day-num').textContent   = G.day;
   document.getElementById('money-num').textContent = G.money;
   document.getElementById('lv-num').textContent    = G.level;
-  document.getElementById('lv-title').textContent  = LEVEL_TITLES[Math.min(G.level, LEVEL_TITLES.length - 1)];
+  document.getElementById('lv-title').textContent  = levelTitle(G.level);
 
   const needed = xpNeeded(G.level);
   const pct    = Math.min((G.xp / needed) * 100, 100);
@@ -1325,7 +1332,7 @@ function gainXP(amount) {
     G.xp -= xpNeeded(G.level);
     G.level++;
     SFX.levelUp();
-    const title = LEVEL_TITLES[Math.min(G.level, LEVEL_TITLES.length - 1)];
+    const title = levelTitle(G.level);
     showToast(`🎉 升級！現在是 Lv.${G.level} ${title}`, 3000);
     checkTasks();
   }
