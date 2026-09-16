@@ -166,8 +166,21 @@ const LEVEL_TITLES = [
   '農業至尊', '種田之神', '大地之主', '農業傳說', '萬世農神',
 ];
 
-const COLS = 6;
-const ROWS = 7;
+// 農田擴建階段：初始 2×2，依等級 + 金幣逐步擴大，Lv.50 可擴到完整 6×7
+const FARM_TIERS = [
+  { cols: 2, rows: 2, level: 1,  cost: 0     },
+  { cols: 3, rows: 2, level: 2,  cost: 120   },
+  { cols: 3, rows: 3, level: 4,  cost: 300   },
+  { cols: 4, rows: 3, level: 7,  cost: 700   },
+  { cols: 4, rows: 4, level: 10, cost: 1500  },
+  { cols: 5, rows: 4, level: 14, cost: 3000  },
+  { cols: 5, rows: 5, level: 19, cost: 5500  },
+  { cols: 6, rows: 5, level: 25, cost: 9000  },
+  { cols: 6, rows: 6, level: 35, cost: 15000 },
+  { cols: 6, rows: 7, level: 50, cost: 25000 },
+];
+function farmTier() { return FARM_TIERS[Math.min(G.farmTier || 0, FARM_TIERS.length - 1)]; }
+function farmCols() { return farmTier().cols; }
 
 function xpNeeded(level) { return level * 150 + 50; }
 
@@ -342,7 +355,9 @@ const DEFAULT_STATE = () => ({
   mode:     'normal', // 'normal' | 'watering' | 'harvest'
   selectedSeed: null,
   activeTab:    'shop',
-  grid: Array(COLS * ROWS).fill(null).map(makePlot),
+  farmTier: 0,
+  grid: Array(FARM_TIERS[0].cols * FARM_TIERS[0].rows).fill(null).map(makePlot),
+  seeds:            {}, // 已購買、尚未種下的種子 { cropId: count }
   inventory:        {},
   totalHarvested:   0,
   totalEarned:      0,
@@ -459,6 +474,7 @@ function loadBackup() {
     if (!G.petFeedCounts)  G.petFeedCounts  = {};
     if (!G.petEnchants)    G.petEnchants    = {};
     if (!G.petTrainCounts) G.petTrainCounts = {};
+    migrateFarmState();
     reapplyBuffs();
     localStorage.removeItem(BACKUP_KEY);
     save();
@@ -520,6 +536,7 @@ function loadFromSlot(n) {
     if (!G.petFeedCounts)  G.petFeedCounts  = {};
     if (!G.petEnchants)    G.petEnchants    = {};
     if (!G.petTrainCounts) G.petTrainCounts = {};
+    migrateFarmState();
     reapplyBuffs();
     save();
     document.getElementById('save-slots-modal')?.remove();
@@ -618,6 +635,21 @@ function renderSaveModal() {
   });
 }
 
+// 舊存檔沒有 farmTier / seeds：依現有格數推回對應階段，已選種子若沒庫存則取消
+function migrateFarmState() {
+  if (!G.seeds) G.seeds = {};
+  if (G.farmTier === undefined || G.farmTier === null) {
+    const n   = G.grid.length;
+    let tier  = FARM_TIERS.findIndex(t => t.cols * t.rows === n);
+    if (tier < 0) tier = n >= 42 ? FARM_TIERS.length - 1 : 0;
+    G.farmTier = tier;
+  }
+  const want = farmTier().cols * farmTier().rows;
+  while (G.grid.length < want) G.grid.push(makePlot());
+  if (G.grid.length > want) G.grid.length = want;
+  if (G.selectedSeed && !G.seeds[G.selectedSeed]) G.selectedSeed = null;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem('farmGame_v2');
@@ -637,6 +669,7 @@ function load() {
   if (!G.petFeedCounts)  G.petFeedCounts  = {};
   if (!G.petEnchants)    G.petEnchants    = {};
   if (!G.petTrainCounts) G.petTrainCounts = {};
+  migrateFarmState();
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
 }
@@ -743,6 +776,8 @@ function plotEmoji(plot) {
 function renderGrid() {
   const grid = document.getElementById('farm-grid');
   grid.innerHTML = '';
+  grid.style.setProperty('--farm-cols', farmCols());
+  renderExpandBar();
 
   G.grid.forEach((plot, idx) => {
     const cell = document.createElement('div');
@@ -770,6 +805,60 @@ function renderGrid() {
   });
 }
 
+// ── Farm expansion ────────────────────────
+
+function renderExpandBar() {
+  const btn = document.getElementById('expand-btn');
+  if (!btn) return;
+  const cur  = farmTier();
+  const next = FARM_TIERS[G.farmTier + 1];
+  if (!next) {
+    btn.textContent = `🏡 農田 ${cur.cols}×${cur.rows}（已達最大）`;
+    btn.disabled = true;
+    btn.classList.remove('locked');
+    return;
+  }
+  const lvOK    = G.level >= next.level;
+  const moneyOK = G.money >= next.cost;
+  btn.disabled  = false;
+  btn.classList.toggle('locked', !lvOK || !moneyOK);
+  btn.textContent = lvOK
+    ? `🔨 擴建農田 ${cur.cols}×${cur.rows} → ${next.cols}×${next.rows}　-${next.cost.toLocaleString()} 💰`
+    : `🔒 擴建農田 ${next.cols}×${next.rows}　需要 Lv.${next.level}・${next.cost.toLocaleString()} 💰`;
+}
+
+function expandFarm() {
+  const next = FARM_TIERS[G.farmTier + 1];
+  if (!next) { showToast('🏡 農田已經是最大了！'); return; }
+  if (G.level < next.level) { SFX.error(); showToast(`🔒 需要 Lv.${next.level} 才能擴建`); return; }
+  if (G.money < next.cost)  { SFX.error(); showToast(`💰 金幣不足！需要 ${next.cost.toLocaleString()} 金幣`); return; }
+
+  showConfirm(
+    `🔨 擴建農田 ${next.cols}×${next.rows}`,
+    `花費 ${next.cost.toLocaleString()} 💰，農田將從 ${farmCols() * farmTier().rows} 格增加到 ${next.cols * next.rows} 格。`,
+    '擴建',
+    () => {
+      const oldCols = farmCols();
+      const oldRows = farmTier().rows;
+      const oldGrid = G.grid;
+      const newGrid = [];
+      // 舊格子依原本的行列位置搬到新格子，多出來的都是空地
+      for (let r = 0; r < next.rows; r++) {
+        for (let c = 0; c < next.cols; c++) {
+          newGrid.push(r < oldRows && c < oldCols ? oldGrid[r * oldCols + c] : makePlot());
+        }
+      }
+      G.money -= next.cost;
+      G.farmTier++;
+      G.grid = newGrid;
+      SFX.sell();
+      showToast(`🏡 農田擴建為 ${next.cols}×${next.rows}！`, 2500);
+      save();
+      renderAll();
+    }
+  );
+}
+
 function renderPanel() {
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === G.activeTab);
@@ -791,7 +880,7 @@ function renderBottomBar() {
 // ── Shop ──────────────────────────────────
 
 function renderShop(el) {
-  let html = '<div class="shop-hint">選好種子後，點擊或拖曳農地批量種植<br>非當季種植每天有 25% 枯死率</div>';
+  let html = '<div class="shop-hint">點擊種子購買，買好的種子到倉庫選擇後即可種植<br>非當季種植每天有 25% 枯死率</div>';
 
   ['common', 'good', 'premium', 'legendary', 'mythical'].forEach(rarityKey => {
     const crops = Object.values(CROPS).filter(c => c.rarity === rarityKey);
@@ -802,9 +891,10 @@ function renderShop(el) {
 
     crops.forEach(crop => {
       const locked        = G.level < crop.minLevel;
-      const selected      = G.selectedSeed === crop.id;
+      const selected      = false;
       const inSeason      = crop.seasons.includes(G.season);
       const seasonIcons   = crop.seasons.map(s => SEASON_ICONS[s]).join('');
+      const owned         = G.seeds[crop.id] || 0;
       const cls = `seed-card rarity-${rarityKey}${locked ? ' locked' : ''}${selected ? ' selected' : ''}`;
       const discount      = G.activeBuffs.shopDiscount;
       const displayCost   = discount > 0
@@ -822,7 +912,7 @@ function renderShop(el) {
               ${crop.name}
               <span class="rarity-badge" style="color:${r.badgeColor};background:${r.badgeBg}">${r.name}</span>
             </div>
-            <div class="seed-days">${crop.days}天</div>
+            <div class="seed-days">${crop.days}天${owned ? `　<span class="seed-owned">持有 ${owned}</span>` : ''}</div>
             <div class="seed-season ${inSeason ? 'in-season' : 'out-season'}">${seasonIcons} ${inSeason ? '當季' : '非當季⚠'}</div>
           </div>
           <div class="seed-prices">
@@ -837,24 +927,132 @@ function renderShop(el) {
   el.innerHTML = html;
 
   el.querySelectorAll('.seed-card:not(.locked)').forEach(card => {
-    card.addEventListener('click', () => {
-      G.selectedSeed = G.selectedSeed === card.dataset.crop ? null : card.dataset.crop;
-      renderPanel();
-    });
+    card.addEventListener('click', () => showBuySeedModal(card.dataset.crop));
   });
+}
+
+function seedUnitCost(crop) {
+  const discount = G.activeBuffs.shopDiscount;
+  return discount > 0 ? Math.max(1, Math.ceil(crop.cost * (1 - discount))) : crop.cost;
+}
+
+function buySeeds(cropId, qty) {
+  const crop   = CROPS[cropId];
+  const unit   = seedUnitCost(crop);
+  const afford = Math.floor(G.money / unit);
+  const count  = Math.min(qty, afford);
+  if (count <= 0) { SFX.error(); showToast('💰 金幣不足！'); return; }
+
+  G.money -= unit * count;
+  G.boughtToday += count;
+  G.seeds[cropId] = (G.seeds[cropId] || 0) + count;
+
+  SFX.sell();
+  showToast(`購買 ${crop.emoji} ${crop.name} 種子 ×${count}，花費 -${unit * count} 💰`);
+  checkTasks();
+  save();
+  renderAll();
+}
+
+function showBuySeedModal(cropId) {
+  const crop = CROPS[cropId];
+  const unit = seedUnitCost(crop);
+
+  document.getElementById('sell-qty-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'sell-qty-modal';
+  let qty = 1;
+
+  const affordable = () => Math.floor(G.money / unit);
+  const clamp = v => Math.max(1, Math.min(v, Math.max(1, affordable())));
+
+  function totalHTML() {
+    const afford = affordable();
+    const over   = qty > afford;
+    return `合計 -${(unit * qty).toLocaleString()} 💰${over ? `<br><span class="sqm-warn">金幣不足，只能買 ${afford} 個</span>` : ''}`;
+  }
+
+  function renderModal() {
+    const afford = affordable();
+    modal.innerHTML = `
+      <div class="sqm-box">
+        <div class="sqm-title">${crop.emoji} ${crop.name} 種子</div>
+        <div class="sqm-stock">單價 ${unit} 💰　持有 ${G.money.toLocaleString()} 💰　最多可買 ${afford} 個</div>
+        <div class="sqm-controls">
+          <button class="sqm-btn" id="sqm-minus">－</button>
+          <input class="sqm-input" id="sqm-input" type="number" inputmode="numeric" min="1" value="${qty}">
+          <button class="sqm-btn" id="sqm-plus">＋</button>
+        </div>
+        <div class="sqm-all-hint">或 <button class="sqm-max-btn" id="sqm-max">買到沒錢 (${afford})</button></div>
+        <div class="sqm-total">${totalHTML()}</div>
+        <div class="sqm-actions">
+          <button class="sqm-cancel" id="sqm-cancel">取消</button>
+          <button class="sqm-confirm" id="sqm-confirm" ${afford <= 0 ? 'disabled' : ''}>購買</button>
+        </div>
+      </div>`;
+    const input = modal.querySelector('#sqm-input');
+    modal.querySelector('#sqm-minus').onclick   = () => { qty = Math.max(1, qty - 1); renderModal(); };
+    modal.querySelector('#sqm-plus').onclick    = () => { qty = clamp(qty + 1); renderModal(); };
+    modal.querySelector('#sqm-max').onclick     = () => { qty = Math.max(1, affordable()); renderModal(); };
+    modal.querySelector('#sqm-cancel').onclick  = () => modal.remove();
+    modal.querySelector('#sqm-confirm').onclick = () => { modal.remove(); buySeeds(cropId, qty); };
+    // 鍵盤直接輸入：超過負擔得起的量就自動壓到上限
+    input.addEventListener('input', () => {
+      const v = parseInt(input.value, 10);
+      if (!Number.isFinite(v)) return;
+      const c = clamp(v);
+      qty = c;
+      if (c !== v) input.value = c;
+      updateTotal();
+    });
+    input.addEventListener('blur', () => { qty = clamp(parseInt(input.value, 10) || 1); renderModal(); });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { modal.remove(); buySeeds(cropId, qty); } });
+    function updateTotal() { modal.querySelector('.sqm-total').innerHTML = totalHTML(); }
+  }
+
+  renderModal();
+  document.body.appendChild(modal);
+  modal.querySelector('#sqm-input').focus();
+  modal.querySelector('#sqm-input').select();
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 // ── Warehouse ─────────────────────────────
 
 function renderWarehouse(el) {
   const items = Object.entries(G.inventory);
+  const seeds = Object.entries(G.seeds);
+
+  let html = '<div class="wh-section-title">🌱 種子（點「種植」後到農地點擊或拖曳）</div>';
+  if (!seeds.length) {
+    html += '<div class="empty-msg small">還沒有種子<br/>到商店購買種子</div>';
+  } else {
+    seeds.forEach(([id, count]) => {
+      const crop     = CROPS[id];
+      const selected = G.selectedSeed === id;
+      const inSeason = crop.seasons.includes(G.season);
+      html += `
+        <div class="inv-item seed-inv${selected ? ' selected' : ''}">
+          <span class="inv-emoji">${crop.emoji}</span>
+          <div class="inv-info">
+            <div class="inv-name">${crop.name}</div>
+            <div class="inv-sub">x${count} &nbsp;${crop.days}天 &nbsp;<span class="${inSeason ? 'in-season' : 'out-season'}">${inSeason ? '當季' : '非當季⚠'}</span></div>
+          </div>
+          <button class="plant-btn${selected ? ' active' : ''}" data-crop="${id}">${selected ? '✔ 種植中' : '種植'}</button>
+        </div>`;
+    });
+  }
+
+  html += '<div class="wh-section-title" style="margin-top:12px">🌾 作物</div>';
   if (!items.length) {
-    el.innerHTML = '<div class="empty-msg">倉庫是空的<br/>收穫作物後在這裡出售</div>';
+    html += '<div class="empty-msg small">還沒有作物<br/>收穫作物後在這裡出售</div>';
+    el.innerHTML = html;
+    el.querySelectorAll('.plant-btn').forEach(b => b.addEventListener('click', () => selectSeed(b.dataset.crop)));
     return;
   }
 
   let total = 0;
-  let html  = '';
 
   items.forEach(([id, count]) => {
     const crop = CROPS[id];
@@ -874,8 +1072,17 @@ function renderWarehouse(el) {
   html += `<button class="sell-all-btn">全部出售 (+${total} 💰)</button>`;
   el.innerHTML = html;
 
+  el.querySelectorAll('.plant-btn').forEach(b => b.addEventListener('click', () => selectSeed(b.dataset.crop)));
   el.querySelectorAll('.sell-btn').forEach(b => b.addEventListener('click', () => showSellQtyModal(b.dataset.crop)));
   el.querySelector('.sell-all-btn').addEventListener('click', sellAll);
+}
+
+function selectSeed(cropId) {
+  G.selectedSeed = G.selectedSeed === cropId ? null : cropId;
+  if (G.selectedSeed) G.mode = 'normal';
+  updateCursor();
+  save();
+  renderAll();
 }
 
 // ── Tasks ─────────────────────────────────
@@ -943,25 +1150,30 @@ function taskStatValue(key) {
 // ══════════════════════════════════════════
 
 function plantSeed(idx) {
-  if (!G.selectedSeed) { showToast('請先在商店選擇種子'); return; }
+  if (!G.selectedSeed) { showToast('請先在倉庫選擇種子'); return; }
   const plot = G.grid[idx];
   if (plot.state !== 'empty') return;
 
   const crop = CROPS[G.selectedSeed];
-  const cost = Math.max(1, Math.ceil(crop.cost * (1 - G.activeBuffs.shopDiscount)));
-  if (G.money < cost) { SFX.error(); showToast('💰 金幣不足！'); return; }
+  if (!G.seeds[G.selectedSeed]) {
+    SFX.error(); showToast(`${crop.emoji} ${crop.name} 種子用完了，到商店購買`);
+    G.selectedSeed = null; save(); renderAll();
+    return;
+  }
 
   SFX.plant();
-  G.money -= cost;
-  G.boughtToday++;
+  G.seeds[G.selectedSeed]--;
+  const cropId = G.selectedSeed;
+  if (G.seeds[cropId] <= 0) { delete G.seeds[cropId]; G.selectedSeed = null; }
 
   plot.state     = 'growing';
-  plot.cropId    = G.selectedSeed;
+  plot.cropId    = cropId;
   plot.daysLeft  = crop.days;
   plot.totalDays = crop.days;
   plot.watered   = true; // freshly planted = already watered today
   plot.dryDays   = 0;
 
+  if (!G.selectedSeed) showToast(`${crop.emoji} ${crop.name} 種子已用完`);
   checkTasks();
   save();
   renderAll();
@@ -2585,7 +2797,7 @@ function handleCell(idx) {
   if      (plot.state === 'withered')                          clearWithered(idx);
   else if (plot.state === 'ready')                             harvestPlot(idx);
   else if (plot.state === 'empty' && G.selectedSeed)          plantSeed(idx);
-  else if (plot.state === 'empty' && !G.selectedSeed)         showToast('請先在商店選擇種子');
+  else if (plot.state === 'empty' && !G.selectedSeed)         showToast('請先在倉庫選擇種子（商店購買）');
 }
 
 function bindEvents() {
@@ -2701,6 +2913,7 @@ function bindEvents() {
   document.getElementById('water-btn').addEventListener('click', () => setMode('watering'));
   document.getElementById('harvest-all-btn').addEventListener('click', harvestAll);
   document.getElementById('harvest-single-btn').addEventListener('click', () => setMode('harvest'));
+  document.getElementById('expand-btn').addEventListener('click', expandFarm);
 
   // Pet screen
   document.getElementById('pet-btn').addEventListener('click', openPetScreen);
