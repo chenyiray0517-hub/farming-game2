@@ -124,7 +124,7 @@ body.harvest-mode  * { cursor: none !important; }
   display: flex;
   flex: 1;
   overflow: hidden;
-  padding: 12px 14px 10px;
+  padding: 12px 14px 10px 84px; /* 左側留給固定功能鈕 */
   gap: 14px;
 }
 
@@ -133,8 +133,9 @@ body.harvest-mode  * { cursor: none !important; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex: 1 0 auto; /* 農田置中於左鈕與右側面板之間 */
 }
 
 .expand-btn {
@@ -710,7 +711,7 @@ body.harvest-mode  * { cursor: none !important; }
 #enchant-btn,
 #trainer-btn {
   position: fixed;
-  right: 18px;
+  left: 19px;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -722,10 +723,10 @@ body.harvest-mode  * { cursor: none !important; }
   transition: transform 0.15s;
   z-index: 50;
 }
-#pet-btn     { bottom: 72px;  background: var(--green-accent); }
-#petshop-btn { bottom: 132px; background: #e09300; }
-#enchant-btn { bottom: 192px; background: #7b1fa2; }
-#trainer-btn { bottom: 252px; background: #e91e63; }
+#pet-btn     { bottom: 132px; background: var(--green-accent); }
+#petshop-btn { bottom: 192px; background: #e09300; }
+#enchant-btn { bottom: 252px; background: #7b1fa2; }
+#trainer-btn { bottom: 312px; background: #e91e63; }
 #pet-btn:hover,
 #petshop-btn:hover,
 #enchant-btn:hover,
@@ -2047,6 +2048,7 @@ body.harvest-mode  * { cursor: none !important; }
 
 /* Medium screens: scale cells, panel fills remaining right space */
 @media (max-width: 900px) {
+  #farm-col { flex: 0 0 auto; }
   .plot { width: 64px; height: 64px; }
   #farm-grid { gap: 6px; }
   #farm-wrapper { padding: 11px; }
