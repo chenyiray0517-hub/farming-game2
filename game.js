@@ -252,6 +252,10 @@ const SFX = (() => {
     adopt()       { [659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.22, 'sine', i * 0.08)); },
     error()       { note(130, 0.25, 0.22, 'square'); },
     wither()      { sweep(280, 130, 0.45, 0.18, 'sawtooth'); },
+    hit()         { sweep(320, 90, 0.12, 0.2, 'square'); },
+    skill()       { sweep(200, 900, 0.18, 0.22, 'sawtooth'); note(1200, 0.2, 0.2, 'triangle', 0.15); },
+    battleWin()   { [523, 659, 784, 1047, 1319].forEach((f, i) => note(f, 0.3, 0.24, 'sine', i * 0.09)); },
+    battleLose()  { sweep(400, 120, 0.7, 0.2, 'sawtooth'); note(110, 0.6, 0.2, 'square', 0.3); },
   };
 })();
 
@@ -385,6 +389,7 @@ const DEFAULT_STATE = () => ({
   petFeedCounts:   {},
   petEnchants:     {},
   petTrainCounts:  {},
+  dungeon: { clearedStage: 0, attemptsToday: 0, team: [] }, // 寵物副本進度（見 battle.js）
 });
 
 let G = DEFAULT_STATE();
@@ -676,6 +681,7 @@ function load() {
   if (!G.petFeedCounts)  G.petFeedCounts  = {};
   if (!G.petEnchants)    G.petEnchants    = {};
   if (!G.petTrainCounts) G.petTrainCounts = {};
+  if (!G.dungeon)        G.dungeon        = { clearedStage: 0, attemptsToday: 0, team: [] };
   migrateFarmState();
   if (!G.dailyPets || G.dailyPets.length === 0) generateDailyPets();
   else reapplyBuffs(); // ensure owned pet buffs are active on save-load
@@ -1422,6 +1428,7 @@ function endDay() {
   // Advance day
   G.day++;
   G.harvestedToday = 0;
+  if (G.dungeon) G.dungeon.attemptsToday = 0;
   G.earnedToday    = 0;
   G.boughtToday    = 0;
   G.dailyTasksDone = {};

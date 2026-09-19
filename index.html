@@ -60,6 +60,7 @@
     <button id="petshop-btn">🍖</button>
     <button id="enchant-btn">🔮</button>
     <button id="trainer-btn">💪</button>
+    <button id="battle-btn" title="寵物副本">⚔️</button>
     <div id="toast-box"></div>
     <div id="cursor-follow">🪣</div>
     <div id="touch-seed-follow"></div>
@@ -92,7 +93,21 @@
         <div id="pet-owned-detail"></div>
       </div>
     </div>
+
+    <!-- Battle Screen (fixed overlay) -->
+    <div id="battle-screen" hidden>
+      <header id="battle-hdr">
+        <button id="battle-back-btn">← 返回農場</button>
+        <div class="pet-hdr-center">
+          <span class="pet-hdr-title" id="battle-title">⚔️ 寵物副本</span>
+          <span class="pet-hdr-sub" id="battle-sub">帶著你的動物夥伴去冒險吧</span>
+        </div>
+        <div class="pet-hdr-right" id="battle-hdr-right"></div>
+      </header>
+      <div id="battle-body"></div>
+    </div>
   </div>
   <script src="game.js"></script>
+  <script src="battle.js"></script>
 </body>
 </html>
